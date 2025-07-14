@@ -1,3 +1,4 @@
+import Providers from "@/components/layout/providers";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -14,7 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Tutor CodeLab - Code Visualization Tool",
-  description: "Write and visualize your code execution with Python Tutor integration",
+  description:
+    "Write and visualize your code execution with Python Tutor integration",
 };
 
 export default function RootLayout({
@@ -27,7 +29,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

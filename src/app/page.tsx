@@ -1,122 +1,172 @@
 import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Code, Play, Eye, FileText, Globe, ExternalLink } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">
-            Tutor CodeLab
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-2xl">
-            A powerful code visualization tool that integrates with Python Tutor to help you 
-            understand how your programs execute step by step.
-          </p>
-        </div>
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Click{" "}
-            <span className="bg-blue-100 dark:bg-blue-900/30 px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold text-blue-800 dark:text-blue-300">
-              Open Code Lab
-            </span>{" "}
-            to start coding and visualizing.
-          </li>
-          <li className="tracking-[-.01em]">
-            Write code in C++, Java, Python, and more languages.
-          </li>
-          <li className="tracking-[-.01em]">
-            See step-by-step execution with Python Tutor integration.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-blue-600 text-white gap-2 hover:bg-blue-700 font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="/lab"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-            Open Code Lab
-          </a>
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="container mx-auto px-4 py-16">
+        <main className="flex flex-col items-center text-center space-y-16">
+          {/* Hero Section */}
+          <div className="space-y-8">
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+              className="dark:invert mx-auto"
+              src="/next.svg"
+              alt="Next.js logo"
+              width={180}
+              height={38}
+              priority
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="/lab"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Code Lab
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://pythontutor.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Python Tutor
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Built with Next.js
-        </a>
-      </footer>
+            <div className="space-y-4">
+              <h1 className="text-5xl font-bold tracking-tight">
+                Tutor CodeLab
+              </h1>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                A powerful code visualization tool that integrates with Python Tutor to help you 
+                understand how your programs execute step by step.
+              </p>
+            </div>
+          </div>
+
+          {/* Features */}
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl">
+            <Card>
+              <CardHeader>
+                <Code className="h-10 w-10 text-primary mx-auto" />
+                <CardTitle>Multi-Language Support</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  Write code in C++, Java, Python, JavaScript and more languages with syntax highlighting.
+                </CardDescription>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <Eye className="h-10 w-10 text-primary mx-auto" />
+                <CardTitle>Step-by-Step Visualization</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  See exactly how your code executes with Python Tutor integration and flow visualization.
+                </CardDescription>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <Play className="h-10 w-10 text-primary mx-auto" />
+                <CardTitle>Interactive Debugging</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  Navigate through execution steps, inspect variables, and understand program flow.
+                </CardDescription>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Getting Started */}
+          <Card className="max-w-2xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Badge variant="secondary">Getting Started</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ol className="text-left space-y-3">
+                <li className="flex items-start gap-3">
+                  <Badge className="mt-0.5">1</Badge>
+                  <span>
+                    Click <Badge variant="outline">Open Code Lab</Badge> to start coding and visualizing.
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Badge className="mt-0.5">2</Badge>
+                  <span>Write code in your preferred programming language.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Badge className="mt-0.5">3</Badge>
+                  <span>Use the debug feature to see step-by-step execution.</span>
+                </li>
+              </ol>
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button asChild size="lg">
+              <Link href="/lab">
+                <Code className="mr-2 h-5 w-5" />
+                Open Code Lab
+              </Link>
+            </Button>
+            
+            <Button variant="outline" size="lg" asChild>
+              <a
+                href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Image
+                  className="dark:invert mr-2"
+                  src="/vercel.svg"
+                  alt="Vercel logomark"
+                  width={16}
+                  height={16}
+                />
+                Deploy now
+                <ExternalLink className="ml-2 h-4 w-4" />
+              </a>
+            </Button>
+            
+            <Button variant="secondary" size="lg" asChild>
+              <a
+                href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Read docs
+                <ExternalLink className="ml-2 h-4 w-4" />
+              </a>
+            </Button>          </div>
+        </main>
+
+        {/* Footer */}
+        <footer className="mt-16 pt-8 border-t">
+          <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+            <Link href="/lab" className="flex items-center gap-2 hover:text-foreground transition-colors">
+              <FileText className="h-4 w-4" />
+              Code Lab
+            </Link>
+            <a
+              href="https://pythontutor.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 hover:text-foreground transition-colors"
+            >
+              <Eye className="h-4 w-4" />
+              Python Tutor
+              <ExternalLink className="h-3 w-3" />
+            </a>
+            <a
+              href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 hover:text-foreground transition-colors"
+            >
+              <Globe className="h-4 w-4" />
+              Built with Next.js
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }

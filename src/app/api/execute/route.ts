@@ -43,10 +43,8 @@ export async function POST(request: NextRequest) {
     // Build the Python Tutor URL
     const pythonTutorUrl = `https://pythontutor.com/web_exec_${language}.py?${params.toString()}`;
 
-    console.log('Making request to:', pythonTutorUrl);
-
     // Make request to Python Tutor
-    const response = await fetch(pythonTutorUrl, {
+    const response = await fetch(pythonTutorUrl, {  
       method: 'GET',
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',

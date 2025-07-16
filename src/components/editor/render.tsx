@@ -23,18 +23,20 @@ import { useRunMutation } from "./hooks";
 import EditorStorageService from "./utils/storage-service";
 import Visualization from "./visualization";
 import { TraceStep } from "./visualization/base/types";
-import CppVisualizationService from "./visualization/types/cpp/service";
+import { cppEditorService } from "./visualization/types/cpp/render";
+import { pyEditorService } from "./visualization/types/py/render";
 
 const LanguageOptionsList = [
   { value: "cpp", label: "C++" },
   { value: "c", label: "C" },
   { value: "java", label: "Java" },
-  { value: "python", label: "Python" },
+  { value: "py", label: "Python" },
   { value: "javascript", label: "JavaScript" },
 ];
 
 const ServiceDict = {
-  cpp: new CppVisualizationService(),
+  cpp: cppEditorService,
+  py: pyEditorService,
 };
 
 export const EditorRender = () => {
@@ -44,7 +46,7 @@ export const EditorRender = () => {
     code,
     setCode,
     setExecutionTrace,
-    setCurrentStep,
+    setCurrentVisualData,
     setIsLoading,
     setError,
     setResult,
@@ -64,7 +66,10 @@ export const EditorRender = () => {
         if (response.success) {
           const parsed = JSON.parse(response.data);
           setExecutionTrace(parsed);
-          setCurrentStep(0);
+          setCurrentVisualData((prev) => ({
+            ...prev,
+            currentStep: 0,
+          }));
           setIsLoading(false);
           setError("");
           setResult("");
@@ -78,10 +83,16 @@ export const EditorRender = () => {
             }
           }
           EditorStorageService.setItem({
-            code,
-            trace: traces,
             savedAt: new Date(),
             status: "success",
+            lastEditor: {
+              trace: {
+                code,
+                trace: traces,
+                status: "success",
+              },
+              language,
+            },
           });
         }
       });
@@ -90,7 +101,7 @@ export const EditorRender = () => {
     code,
     language,
     setExecutionTrace,
-    setCurrentStep,
+    setCurrentVisualData,
     setIsLoading,
     setError,
     setResult,
@@ -102,16 +113,20 @@ export const EditorRender = () => {
       loadHelpReadyRef.current = true;
       if (!code) {
         const savedData = EditorStorageService.getItem();
-        if (savedData) {
-          setExecutionTrace(savedData);
-          setCurrentStep(0);
-          setCode(savedData.code);
+        if (savedData && savedData.lastEditor) {
+          setCode(savedData.lastEditor.trace.code);
+          setExecutionTrace(savedData.lastEditor.trace);
+          setLanguage(savedData.lastEditor.language);
+          setCurrentVisualData((prev) => ({
+            ...prev,
+            currentStep: 0,
+          }));
         } else {
           setCode(getDefaultCode(language));
         }
       }
     }
-  }, [code, language, setCode, setExecutionTrace, setCurrentStep]);
+  }, [code, language, setCode, setExecutionTrace, setCurrentVisualData, setLanguage]);
 
   return (
     <div className="h-screen w-screen bg-background flex flex-col overflow-hidden">

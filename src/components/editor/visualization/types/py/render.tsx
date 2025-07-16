@@ -14,8 +14,7 @@ import {
 } from "@xyflow/react";
 import { useCallback, useEffect, useState } from "react";
 import VisualizationCommon from "../../base/render";
-import { StackNode } from "./flow/StackNode";
-import CppVisualizationService from "./service";
+import { FrameNode } from "./flow/FrameNode";
 
 import { useEditor } from "@/components/editor/context";
 import {
@@ -25,10 +24,11 @@ import {
 } from "@/components/ui/resizable";
 import "@xyflow/react/dist/style.css";
 import { TraceStep } from "../../base/types";
-import { SettingsContextProvider, useSettingsContext } from "./context";
+import { SettingsContextProvider } from "./context";
+import PyVisualizationService from "./service";
 import { HeapNode } from "./flow/HeapNode";
 
-export const CppVisualizationRender = () => {
+export const PyVisualizationRender = () => {
   const { executionTrace, currentVisualData, error, result, viewMode } =
     useEditor();
 
@@ -77,7 +77,7 @@ export const CppVisualizationRender = () => {
 };
 
 const nodeTypes = {
-  stack: StackNode,
+  frame: FrameNode,
   heap: HeapNode,
 };
 
@@ -92,7 +92,7 @@ const nodeColor = (node: Node) => {
   }
 };
 
-export const cppEditorService = new CppVisualizationService();
+export const pyEditorService = new PyVisualizationService();
 
 const MainVisualizationRender = () => {
   const { currentVisualData, executionTrace } = useEditor();
@@ -107,7 +107,10 @@ const MainVisualizationRender = () => {
 
   const updateNodes = useCallback(
     (trace: TraceStep) => {
-      const parsed = cppEditorService.parseToData(trace);
+      const parsed = pyEditorService.parseToData(trace);
+      console.log("Parsed nodes:", {
+        ...parsed,
+      });
       const updated = parsed.nodes.map((node) => {
         const existingNode = nodes.find((n) => n.id === node.id);
         if (existingNode) {
@@ -118,10 +121,10 @@ const MainVisualizationRender = () => {
         }
         return node;
       });
-      setNodes(updated as any);
-      setEdges(parsed.edges);
+      setNodes(updated);
+      // setEdges(parsed.edges);
     },
-    [nodes, setEdges, setNodes]
+    [nodes, setNodes]
   );
 
   const [lastProcessedStep, setLastProcessedStep] = useState(
@@ -143,7 +146,6 @@ const MainVisualizationRender = () => {
 
   return (
     <SettingsContextProvider>
-      <TopToolbar />
       <style jsx global>{`
         .react-flow__edge {
           z-index: 1000 !important;
@@ -207,30 +209,5 @@ const MainVisualizationRender = () => {
         </ReactFlow>
       </div>
     </SettingsContextProvider>
-  );
-};
-
-const TopToolbar = () => {
-  const { currentVisualData } = useEditor();
-  const { showMemory, setShowMemory } = useSettingsContext();
-
-  return (
-    <VisualizationCommon.Render.Container className="mb-3">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-primary"></div>
-          Variable Visualization (Step {currentVisualData.currentStep + 1})
-        </h4>
-        <label className="flex items-center text-xs text-gray-600">
-          <input
-            type="checkbox"
-            checked={showMemory}
-            onChange={(e) => setShowMemory(e.target.checked)}
-            className="mr-1 w-3 h-3"
-          />
-          Show memory
-        </label>
-      </div>
-    </VisualizationCommon.Render.Container>
   );
 };

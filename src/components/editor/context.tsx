@@ -1,18 +1,11 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useState,
-} from "react";
-import type {
-  Dispatch,
-  PropsWithChildren,
-  SetStateAction,
-} from "react";
+import type { Dispatch, PropsWithChildren, SetStateAction } from "react";
+import { createContext, useContext, useState } from "react";
 import { useLoadMutation } from "./hooks";
 
 import type { ExecutionTrace } from "./visualization/base/types";
+import { VisualDataType } from "./visualization/types";
 
 type EditorContextType = {
   language: string;
@@ -25,8 +18,6 @@ type EditorContextType = {
   // Visualization state
   executionTrace: ExecutionTrace | null;
   setExecutionTrace: Dispatch<SetStateAction<ExecutionTrace | null>>;
-  currentStep: number;
-  setCurrentStep: Dispatch<SetStateAction<number>>;
   goToStep: (step: number) => void;
   isLoading: boolean;
   setIsLoading: Dispatch<SetStateAction<boolean>>;
@@ -36,6 +27,9 @@ type EditorContextType = {
   setResult: Dispatch<SetStateAction<string>>;
   viewMode: "visual" | "json";
   setViewMode: Dispatch<SetStateAction<"visual" | "json">>;
+
+  currentVisualData: VisualDataType;
+  setCurrentVisualData: Dispatch<SetStateAction<VisualDataType>>;
 };
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -48,16 +42,28 @@ export function EditorProvider({ children }: EditorProviderProps) {
   const [language, setLanguage] = useState("cpp");
 
   // Visualization state
-  const [executionTrace, setExecutionTrace] = useState<ExecutionTrace | null>(null);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [executionTrace, setExecutionTrace] = useState<ExecutionTrace | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState("");
   const [viewMode, setViewMode] = useState<"visual" | "json">("visual");
 
+  const [currentVisualData, setCurrentVisualData] = useState<VisualDataType>({
+    currentStep: 1,
+    flow: {
+      nodes: {},
+      edges: {},
+    },
+  });
+
   const goToStep = (step: number) => {
     if (executionTrace && step >= 0 && step < executionTrace.trace.length) {
-      setCurrentStep(step);
+      setCurrentVisualData((prev) => ({
+        ...prev,
+        currentStep: step,
+      }));
     }
   };
 
@@ -71,8 +77,6 @@ export function EditorProvider({ children }: EditorProviderProps) {
     },
     executionTrace,
     setExecutionTrace,
-    currentStep,
-    setCurrentStep,
     goToStep,
     isLoading,
     setIsLoading,
@@ -82,6 +86,9 @@ export function EditorProvider({ children }: EditorProviderProps) {
     setResult,
     viewMode,
     setViewMode,
+
+    currentVisualData,
+    setCurrentVisualData,
   };
 
   return (

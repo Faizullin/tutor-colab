@@ -1,337 +1,200 @@
 import { Edge, MarkerType, Node } from "@xyflow/react";
 import { VisualizationServiceBase } from "../../base/service-base";
 import { ExecutionRequest, TraceStep } from "../../base/types";
-import { HeapBlockData } from "./flow/HeapNode";
-import { StackVariableData } from "./flow/StackNode";
-
-interface MemoryData {
-  event: string;
-  func_name: string;
-  line: number;
-  stack_to_render: Array<{
-    encoded_locals: Record<string, any>;
-    func_name: string;
-    ordered_varnames: string[];
-    frame_id: string;
-  }>;
-  heap: Record<string, any>;
-  stdout?: string;
-}
-
-interface ArrayInfo {
-  nodeId: string;
-  baseAddress: string;
-  elementSize: number;
-  elements: Array<{
-    index: number;
-    address: string;
-    value: string;
-    isPointer: boolean;
-  }>;
-}
+import { HeapNodeType } from "./flow/HeapNode";
+import { StackNodeType } from "./flow/StackNode";
+import {
+  CppGeneralVariableType,
+  CppPointerVariableType,
+  HexAddress,
+  UNINITIALIZED,
+} from "./types";
+import CppUtils from "./utils";
 
 export default class CppVisualizationService extends VisualizationServiceBase {
   async executeCode(request: Omit<ExecutionRequest, "language">) {
     return await super.executeCode({ ...request, language: "cpp" });
   }
-  parser(inputJsonData: TraceStep) {
-    const jsonData: MemoryData = inputJsonData as MemoryData;
-    const nodes: Node[] = [];
+  parseToData(inputJsonData: TraceStep) {
+    const nodes: Node<any>[] = [];
     const edges: Edge[] = [];
-    const addressToElementMap = new Map<
-      string,
-      { nodeId: string; elementAddress: string; elementIndex: number }
-    >();
-    const arrayInfoMap = new Map<string, ArrayInfo>();
 
-    // Parse Heap first to build address mapping and array info
     let heapNodeIndex = 0;
-    Object.entries(jsonData.heap).forEach(([address, heapData]) => {
-      
-      // Handle different heapData structures
-      let actualData: any[];
-      if (heapData && typeof heapData === 'object' && 'kind' in heapData && 'val' in heapData) {
-        // New structure: {kind: 'readonly_memory', val: Array}
-        actualData = heapData.val as any[];
-      } else {
-        // Original structure: direct array
-        actualData = heapData as any[];
-      }
-      
-      const [objectType, , metadata, ...elements] = actualData;
-
-      if (objectType === "C_ARRAY") {
-        const parsedElements = elements.map((element: any[], index: number) => {
-          const [, elemAddress, elemType, elemValue] = element;
-          const elementData = {
-            index,
-            value:
-              elemValue === "<UNINITIALIZED>"
-                ? "?"
-                : typeof elemValue === "string" && elemValue.startsWith("0x")
-                ? elemValue
-                : elemValue?.toString() || "?",
-            address: elemAddress,
-            isPointer:
-              elemType === "pointer" ||
-              (typeof elemValue === "string" && elemValue.startsWith("0x")),
-          };
-
-          // Map each element address to its node and element info
-          addressToElementMap.set(elemAddress, {
-            nodeId: `heap-${address}`,
-            elementAddress: elemAddress,
-            elementIndex: index,
-          });
-
-          return elementData;
-        });
-
-        // Store array info for offset calculations
-        arrayInfoMap.set(address, {
-          nodeId: `heap-${address}`,
-          baseAddress: address,
-          elementSize: metadata.elt_bytes || 1,
-          elements: parsedElements,
-        });
-
-        // Determine node type based on content
-        const hasPointers = parsedElements.some((elem) => elem.isPointer);
-        const nodeType = hasPointers
-          ? "heapArray"
-          : metadata.elt_bytes === 1
-          ? "heapString"
-          : "heapArray";
-
-        // Determine if this is readonly memory
-        const isReadonly = heapData && typeof heapData === 'object' && 'kind' in heapData && heapData.kind === 'readonly_memory';
-        const labelPrefix = isReadonly ? "readonly " : "";
-
-        const heapNode: Node<HeapBlockData> = {
-          id: `heap-${address}`,
-          type: nodeType,
-          position: {
-            x: 400,
-            y: 50 + heapNodeIndex * 250, // Stack vertically, 250px apart
-          },
-          data: {
-            label: `${labelPrefix}array (${metadata.elt_bytes}B elements)`,
-            address: address,
-            type: "array",
-            size: elements.length,
-            elements: parsedElements,
-          },
-          zIndex: 1, // Lower z-index for nodes
-        };
-        nodes.push(heapNode);
-
-        heapNodeIndex++;
-      }
-    });
-
-    // Function to find target element by address or offset calculation
-    function findTargetElement(
-      targetAddress: string
-    ): { nodeId: string; elementAddress: string; elementIndex: number } | null {
-      // First, try direct address match
-      const directMatch = addressToElementMap.get(targetAddress);
-      if (directMatch) {
-        return directMatch;
-      }
-
-      // If no direct match, try to find by calculating offset within arrays
-      for (const [baseAddress, arrayInfo] of arrayInfoMap.entries()) {
-        const baseAddr = Number.parseInt(baseAddress, 16);
-        const targetAddr = Number.parseInt(targetAddress, 16);
-
-        if (targetAddr >= baseAddr) {
-          const offset = targetAddr - baseAddr;
-          const elementIndex = Math.floor(offset / arrayInfo.elementSize);
-
-          // Check if this offset corresponds to a valid element in this array
-          if (elementIndex >= 0 && elementIndex < arrayInfo.elements.length) {
-            const element = arrayInfo.elements[elementIndex];
-            return {
-              nodeId: arrayInfo.nodeId,
-              elementAddress: element.address,
-              elementIndex: elementIndex,
-            };
-          }
-        }
-      }
-
-      return null;
-    }
-
-    // Parse Stack and create connections
-    if (jsonData.stack_to_render && jsonData.stack_to_render.length > 0) {
-      const stackFrame = jsonData.stack_to_render[0];
-      const variables = stackFrame.ordered_varnames
-        .map((varName) => {
-          const varData = stackFrame.encoded_locals[varName];
-          if (varData) {
-            const [, address, type, value, metadata] = varData;
-            return {
-              id: varName,
-              name: varName,
-              type: metadata?.target_type || type,
-              address: address,
-              value:
-                typeof value === "string" && value.startsWith("0x")
-                  ? value
-                  : undefined,
-            };
-          }
-          return null;
-        })
-        .filter(Boolean);
-
-      const stackNode: Node<StackVariableData> = {
-        id: "stack-main",
-        type: "stack",
-        position: { x: 50, y: 100 },
+    Object.entries(inputJsonData.heap).forEach(([, heapData]) => {
+      const heap = CppUtils.cppConvertHeap(heapData);
+      const heapId = CppUtils.getHeapNodeId(heap);
+      const heapNode: HeapNodeType = {
+        id: heapId,
+        type: "heap",
+        position: {
+          x: 400,
+          y: 50 + heapNodeIndex * 250,
+        },
         data: {
-          label: `Stack (${stackFrame.func_name})`,
-          variables: variables as any[],
+          heap,
         },
         zIndex: 1, // Lower z-index for nodes
       };
-      nodes.push(stackNode);
+      nodes.push(heapNode);
+      heapNodeIndex++;
+    });
 
-      // Create edges from stack to specific heap elements
-      variables.forEach((variable) => {
-        if (variable?.value && variable.value.startsWith("0x")) {
-          const targetAddress = variable.value;
-          const targetInfo = findTargetElement(targetAddress);
-
-          if (targetInfo) {
-            // Connect to specific element
-            edges.push({
-              id: `stack-${variable.id}-to-elem-${targetAddress}`,
-              source: "stack-main",
-              sourceHandle: `stack-main-${variable.id}`,
-              target: targetInfo.nodeId,
-              targetHandle: `${targetInfo.nodeId}-elem-${targetInfo.elementAddress}`,
-              animated: true,
-              style: {
-                stroke: "#2563eb",
-                strokeWidth: 2, // Reduced stroke width
-                zIndex: 1000, // High z-index for edges
-              },
-              markerEnd: {
-                type: MarkerType.ArrowClosed,
-                color: "#2563eb",
-                width: 15, // Reduced arrow size
-                height: 15, // Reduced arrow size
-              },
-              zIndex: 1000,
-            });
-          } else {
-            // Fallback to node-level connection if element not found
-            const targetHeapId = `heap-${targetAddress}`;
-            edges.push({
-              id: `stack-${variable.id}-to-${targetHeapId}`,
-              source: "stack-main",
-              sourceHandle: `stack-main-${variable.id}`,
-              target: targetHeapId,
-              targetHandle: `${targetHeapId}-input`,
-              animated: true,
-              style: {
-                stroke: "#2563eb",
-                strokeWidth: 2, // Reduced stroke width
-                zIndex: 1000,
-              },
-              markerEnd: {
-                type: MarkerType.ArrowClosed,
-                color: "#2563eb",
-                width: 15, // Reduced arrow size
-                height: 15, // Reduced arrow size
-              },
-              zIndex: 1000,
-            });
-          }
-        }
+    if (
+      inputJsonData.stack_to_render &&
+      inputJsonData.stack_to_render.length > 0
+    ) {
+      inputJsonData.stack_to_render.forEach((stackFrame, frameIdx) => {
+        const variables = (stackFrame.ordered_varnames || []).map((varName) => {
+          const varData = stackFrame.encoded_locals[varName];
+          const value = CppUtils.cppConvert(varData);
+          return {
+            variableName: varName,
+            value,
+          };
+        });
+        const frameNode: StackNodeType = {
+          id: CppUtils.getFrameNodeId(stackFrame),
+          data: {
+            label: `${stackFrame.func_name}`,
+            variables,
+          },
+          type: "stack",
+          position: { x: 50, y: 100 + frameIdx * 220 },
+          zIndex: 1,
+        };
+        nodes.push(frameNode);
       });
     }
 
-    // Create heap-to-heap connections
-    Object.entries(jsonData.heap).forEach(([address, heapData]) => {
-      // Handle different heapData structures
-      let actualData: any[];
-      if (heapData && typeof heapData === 'object' && 'kind' in heapData && 'val' in heapData) {
-        // New structure: {kind: 'readonly_memory', val: Array}
-        actualData = heapData.val as any[];
-      } else {
-        // Original structure: direct array
-        actualData = heapData as any[];
+    const addressToNodeIdMap = new Map<HexAddress, string>();
+    nodes.forEach((nodeItem) => {
+      if (nodeItem.type === "heap") {
+        const typedNodeItem = nodeItem as HeapNodeType;
+        if (CppUtils.isArray(typedNodeItem.data.heap.value)) {
+          typedNodeItem.data.heap.value.value.forEach((element) => {
+            addressToNodeIdMap.set(element.address, typedNodeItem.id);
+          });
+        }
+      } else if (nodeItem.type === "stack") {
+        const typedNodeItem = nodeItem.data as StackNodeType["data"];
+        typedNodeItem.variables.forEach((variable) => {
+          addressToNodeIdMap.set(variable.value.address, nodeItem.id);
+        });
       }
-      
-      const [objectType, , , ...elements] = actualData;
-
-      if (objectType === "C_ARRAY") {
-        elements.forEach((element: any[]) => {
-          const [, elemAddress, elemType, elemValue] = element;
-
-          if (
-            elemType === "pointer" &&
-            typeof elemValue === "string" &&
-            elemValue.startsWith("0x") &&
-            elemValue !== "<UNINITIALIZED>"
-          ) {
-            const targetAddress = elemValue;
-            const targetInfo = findTargetElement(targetAddress);
-
-            if (targetInfo) {
-              // Connect to specific target element
-              edges.push({
-                id: `heap-${address}-elem-${elemAddress}-to-elem-${targetAddress}`,
-                source: `heap-${address}`,
-                sourceHandle: `heap-${address}-elem-${elemAddress}-output`,
-                target: targetInfo.nodeId,
-                targetHandle: `${targetInfo.nodeId}-elem-${targetInfo.elementAddress}`,
-                animated: true,
-                style: {
-                  stroke: "#dc2626",
-                  strokeWidth: 2, // Reduced stroke width
-                  zIndex: 1000,
-                },
-                markerEnd: {
-                  type: MarkerType.ArrowClosed,
-                  color: "#dc2626",
-                  width: 15, // Reduced arrow size
-                  height: 15, // Reduced arrow size
-                },
-                zIndex: 1000,
-              });
-            } else {
-              // Fallback to node-level connection
-              const targetHeapId = `heap-${targetAddress}`;
-              edges.push({
-                id: `heap-${address}-elem-${elemAddress}-to-${targetHeapId}`,
-                source: `heap-${address}`,
-                sourceHandle: `heap-${address}-elem-${elemAddress}-output`,
-                target: targetHeapId,
-                targetHandle: `${targetHeapId}-input`,
-                animated: true,
-                style: {
-                  stroke: "#dc2626",
-                  strokeWidth: 2, // Reduced stroke width
-                  zIndex: 1000,
-                },
-                markerEnd: {
-                  type: MarkerType.ArrowClosed,
-                  color: "#dc2626",
-                  width: 15, // Reduced arrow size
-                  height: 15, // Reduced arrow size
-                },
-                zIndex: 1000,
-              });
-            }
-          }
+    });
+    nodes.forEach((nodeItem) => {
+      if (nodeItem.type === "heap") {
+        const typedNodeItem = nodeItem as HeapNodeType;
+        generatePointerEdges(
+          typedNodeItem.data.heap.value,
+          {
+            currentNodeId: nodeItem.id,
+            variablePath: "value",
+          },
+          addressToNodeIdMap,
+          edges
+        );
+      } else if (nodeItem.type === "stack") {
+        const typedNodeItem = nodeItem.data as StackNodeType["data"];
+        typedNodeItem.variables.forEach((variable) => {
+          generatePointerEdges(
+            variable.value,
+            {
+              currentNodeId: nodeItem.id,
+              variablePath: variable.variableName,
+            },
+            addressToNodeIdMap,
+            edges
+          );
         });
       }
     });
 
-    return { nodes, edges };
+    // edges.forEach((edge) => {
+    //   console.log(
+    //     `${edge.source}.${edge.sourceHandle} -> ${edge.target}.${edge.targetHandle}`
+    //   );
+    // });
+
+    return {
+      nodes,
+      edges,
+    };
+  }
+}
+
+interface EdgeContext {
+  currentNodeId: string;
+  variablePath: string;
+}
+
+function generatePointerEdges(
+  varValue: CppGeneralVariableType,
+  ctx: EdgeContext,
+  addressToNodeIdMap: Map<HexAddress, string>,
+  edges: Edge[] = []
+): void {
+  if (varValue.kind === "C_STRUCT") {
+    varValue.objects.forEach((obj) => {
+      generatePointerEdges(
+        obj.value,
+        {
+          ...ctx,
+          variablePath: `${ctx.variablePath}.${obj.variableName}`,
+        },
+        addressToNodeIdMap,
+        edges
+      );
+    });
+    return;
+  }
+  if (!varValue || varValue.value === UNINITIALIZED) return;
+
+  switch (varValue.kind) {
+    case "C_DATA":
+      if (varValue.type === "pointer") {
+        const typedVarValue = varValue as CppPointerVariableType;
+        const targetAddr = typedVarValue.value;
+        if (targetAddr === UNINITIALIZED) {
+          throw new Error("Pointer value is UNINITIALIZED");
+        }
+        const targetNodeId = addressToNodeIdMap.get(targetAddr);
+        if (targetNodeId) {
+          const sourceHandleId = CppUtils.getVariableNodeId(varValue);
+          const targetHandleId = CppUtils.getVariableNodeId(targetAddr);
+          edges.push({
+            id: `edge-${ctx.currentNodeId}-${targetAddr}-${ctx.variablePath}`,
+            source: ctx.currentNodeId,
+            sourceHandle: sourceHandleId,
+            target: targetNodeId,
+            targetHandle: targetHandleId,
+            animated: true,
+            style: { strokeWidth: 1.5 },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: "#2563eb",
+              width: 15,
+              height: 15,
+            },
+          });
+        }
+      }
+      break;
+
+    case "C_ARRAY":
+      varValue.value.forEach((child, index) => {
+        generatePointerEdges(
+          child,
+          {
+            ...ctx,
+            variablePath: `${ctx.variablePath}[${index}]`,
+          },
+          addressToNodeIdMap,
+          edges
+        );
+      });
+      break;
+    default:
+      throw new Error(`Unknown variable kind: ${(varValue as any).kind}`);
   }
 }

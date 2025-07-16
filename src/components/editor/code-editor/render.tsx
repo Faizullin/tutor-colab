@@ -6,7 +6,7 @@ import { useEditor } from "../context";
 import "./styles.css";
 
 export const CodeEditorRender = () => {
-  const { code, setCode, language, currentStep, executionTrace } = useEditor();
+  const { code, setCode, language, currentVisualData, executionTrace } = useEditor();
   const editorRef = useRef<any>(null);
   const decorationsRef = useRef<string[]>([]);
 
@@ -17,7 +17,7 @@ export const CodeEditorRender = () => {
       case "c++":
       case "c":
         return "cpp";
-      case "python":
+      case "py":
         return "python";
       case "java":
         return "java";
@@ -29,7 +29,7 @@ export const CodeEditorRender = () => {
   }, [language]);
 
   useEffect(() => {
-    const currentLine = executionTrace?.trace?.[currentStep]?.line;
+    const currentLine = executionTrace?.trace?.[currentVisualData.currentStep]?.line;
     if (editorRef.current && currentLine) {
       decorationsRef.current = editorRef.current.deltaDecorations(
         decorationsRef.current,
@@ -49,7 +49,7 @@ export const CodeEditorRender = () => {
         ]
       );
     }
-  }, [currentStep, executionTrace?.trace]);
+  }, [currentVisualData.currentStep, executionTrace?.trace]);
 
   return (
     <div className="h-full flex flex-col bg-background">

@@ -101,7 +101,7 @@ export class VisualizationServiceBase {
 
   getConfigParams() {
     const sessionUUID = this._generateSessionUUID();
-    const userUUID = "ff77a87f-3f9c-4f93-d390-67214c308b9e";
+    const userUUID = "ff77a87f-3f9c-4f93-d390-67214c308b9h";
     return {
       sessionUUID,
       userUUID,

@@ -2,9 +2,13 @@ import { ExecutionTrace } from "../visualization/base/types";
 
 const STORAGE_KEY = "editor_storage";
 
-type StorageServiceDataType = ExecutionTrace & {
+type StorageServiceDataType = {
   status: "success" | "error";
   savedAt: Date;
+  lastEditor: {
+    trace: ExecutionTrace;
+    language: string;
+  };
 };
 
 export default class EditorStorageService {

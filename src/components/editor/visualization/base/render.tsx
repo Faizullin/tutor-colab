@@ -68,7 +68,7 @@ const VisualizationConsoleOutput = ({ stdout }: { stdout: string }) => {
 };
 
 const VisualizationToolbar = () => {
-  const { executionTrace, currentStep, goToStep, viewMode, setViewMode } =
+  const { executionTrace, currentVisualData, goToStep, viewMode, setViewMode } =
     useEditor();
 
   if (!executionTrace) return null;
@@ -106,26 +106,29 @@ const VisualizationToolbar = () => {
             size="sm"
             variant="outline"
             onClick={() => goToStep(0)}
-            disabled={currentStep === 0}
+            disabled={currentVisualData.currentStep === 0}
           >
             <SkipBack className="h-3 w-3" />
           </Button>
           <Button
             size="sm"
             variant="outline"
-            onClick={() => goToStep(currentStep - 1)}
-            disabled={currentStep === 0}
+            onClick={() => goToStep(currentVisualData.currentStep - 1)}
+            disabled={currentVisualData.currentStep === 0}
           >
             <ArrowLeft className="h-3 w-3" />
           </Button>
           <Badge variant="secondary" className="mx-2">
-            Step {currentStep + 1} of {executionTrace.trace.length}
+            Step {currentVisualData.currentStep + 1} of{" "}
+            {executionTrace.trace.length}
           </Badge>
           <Button
             size="sm"
             variant="outline"
-            onClick={() => goToStep(currentStep + 1)}
-            disabled={currentStep === executionTrace.trace.length - 1}
+            onClick={() => goToStep(currentVisualData.currentStep + 1)}
+            disabled={
+              currentVisualData.currentStep === executionTrace.trace.length - 1
+            }
           >
             <ArrowRight className="h-3 w-3" />
           </Button>
@@ -133,7 +136,9 @@ const VisualizationToolbar = () => {
             size="sm"
             variant="outline"
             onClick={() => goToStep(executionTrace.trace.length - 1)}
-            disabled={currentStep === executionTrace.trace.length - 1}
+            disabled={
+              currentVisualData.currentStep === executionTrace.trace.length - 1
+            }
           >
             <SkipForward className="h-3 w-3" />
           </Button>
@@ -150,7 +155,9 @@ const VisualizationToolbar = () => {
               <span>Executed</span>
             </div>
             <Badge variant="outline" className="text-xs">
-              Line: {executionTrace.trace[currentStep]?.line || "N/A"}
+              Line:{" "}
+              {executionTrace.trace[currentVisualData.currentStep]?.line ||
+                "N/A"}
             </Badge>
           </div>
         </div>
@@ -164,19 +171,23 @@ const VisualizationToolbar = () => {
 };
 
 const VisualizationRenderJson = () => {
-  const { executionTrace, currentStep } = useEditor();
+  const { executionTrace, currentVisualData } = useEditor();
   if (!executionTrace) return null;
   return (
     <div>
       <div className="mb-3">
         <h4 className="text-sm font-semibold flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-primary"></div>
-          Execution Trace (Step {currentStep + 1})
+          Execution Trace (Step {currentVisualData.currentStep + 1})
         </h4>
       </div>
       <div className="h-96 overflow-auto border rounded-md">
         <pre className="text-xs font-mono p-4 whitespace-pre-wrap">
-          {JSON.stringify(executionTrace.trace[currentStep], null, 2)}
+          {JSON.stringify(
+            executionTrace.trace[currentVisualData.currentStep],
+            null,
+            2
+          )}
         </pre>
       </div>
     </div>

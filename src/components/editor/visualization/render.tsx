@@ -1,9 +1,11 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useEditor } from "../context";
 import { CppVisualizationRender } from "./types/cpp/render";
+import { PyVisualizationRender } from "./types/py/render";
 
 const RenderersDict = {
   cpp: CppVisualizationRender,
+  py: PyVisualizationRender,
 };
 
 export const VisualizationRender = () => {

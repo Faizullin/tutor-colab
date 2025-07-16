@@ -21,7 +21,7 @@ export interface TraceStep {
     func_name: string;
     line: number;
     is_highlighted: boolean;
-    ordered_varnames?: string[];
+    ordered_varnames: string[];
     encoded_locals: Record<string, unknown>;
     frame_id?: string;
     is_parent?: boolean;
@@ -29,7 +29,7 @@ export interface TraceStep {
     parent_frame_id_list?: string[];
     unique_hash?: string;
   }>;
-  heap?: Record<string, unknown>;
+  heap: Record<string, unknown>;
   stdout?: string;
   globals?: Record<string, unknown>;
   ordered_globals?: string[];

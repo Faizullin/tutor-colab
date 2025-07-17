@@ -1,0 +1,1 @@
+export const DEFAULT_FIREBASE_CREDENTIALS_PROVIDER_NAME = "firebase-credentials";

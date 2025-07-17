@@ -1,0 +1,629 @@
+/* Variable Table Styles */
+.variable-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.variable-table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 0.875rem;
+    letter-spacing: 0.025em;
+}
+
+.variable-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.variable-table tbody tr:hover {
+    background-color: rgba(99, 102, 241, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.variable-name {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-weight: 600;
+    color: #3b82f6;
+    position: relative;
+    cursor: pointer;
+}
+
+.variable-type {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    color: #8b5cf6;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.variable-value {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    color: #059669;
+    font-weight: 500;
+    position: relative;
+}
+
+.pointer-value {
+    color: #dc2626 !important;
+    font-weight: 600;
+}
+
+.uninitialized-value {
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* Arrow Animation */
+.variable-arrow {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.variable-arrow.visible {
+    opacity: 1;
+}
+
+.arrow-line {
+    stroke: #3b82f6;
+    stroke-width: 2;
+    marker-end: url(#arrowhead);
+    stroke-dasharray: 5, 5;
+    animation: dash 1s linear infinite;
+}
+
+@keyframes dash {
+    to {
+        stroke-dashoffset: -10;
+    }
+}
+
+/* Value Box Styles */
+.value-box {
+    position: absolute;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875rem;
+    font-weight: 600;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.value-box.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.value-box::before {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #667eea;
+}
+
+/* Dark mode variable table styles */
+.dark .variable-table th {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+
+.dark .variable-table td {
+    border-bottom-color: #374151;
+    background-color: #1f2937;
+}
+
+.dark .variable-table tbody tr:hover {
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+.dark .variable-name {
+    color: #60a5fa;
+}
+
+.dark .variable-type {
+    color: #a78bfa;
+}
+
+.dark .variable-value {
+    color: #34d399;
+}
+
+/* Frame and Object Styles for Python Tutor Layout */
+.frame-box {
+    @apply border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 mb-3;
+}
+
+.frame-header {
+    @apply bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-t-lg border-b border-gray-300 dark:border-gray-600;
+    @apply font-mono text-sm font-semibold text-gray-900 dark:text-white;
+}
+
+.frame-content {
+    @apply p-3 space-y-2;
+}
+
+.frame-variable {
+    @apply flex items-center justify-between;
+}
+
+.variable-label {
+    @apply font-mono text-sm text-gray-700 dark:text-gray-300;
+}
+
+.variable-box {
+    @apply px-2 py-1 rounded border text-sm font-mono min-w-[60px] text-center;
+    @apply bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600;
+    @apply text-gray-900 dark:text-white;
+}
+
+.pointer-variable {
+    @apply bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-600;
+    @apply text-blue-800 dark:text-blue-200 cursor-pointer;
+    @apply transition-all duration-200 hover:shadow-md;
+}
+
+.object-box {
+    @apply border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800;
+    @apply min-w-[120px] inline-block mr-4 mb-4;
+}
+
+.object-header {
+    @apply bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-t-lg border-b border-gray-300 dark:border-gray-600;
+    @apply font-mono text-xs font-semibold text-gray-700 dark:text-gray-300 text-center;
+}
+
+.object-body {
+    @apply p-3;
+}
+
+.object-name {
+    @apply font-mono text-sm text-gray-900 dark:text-white;
+}
+
+.object-elements {
+    @apply space-y-1;
+}
+
+.object-element {
+    @apply flex items-center gap-2;
+}
+
+.element-index {
+    @apply bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded text-xs font-mono;
+    @apply text-gray-700 dark:text-gray-300 min-w-[20px] text-center;
+}
+
+.element-value {
+    @apply font-mono text-sm text-gray-900 dark:text-white;
+}
+
+.object-value {
+    @apply font-mono text-sm text-gray-900 dark:text-white;
+}
+
+.function-object {
+    @apply bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600;
+}
+
+.function-object .object-header {
+    @apply bg-blue-100 dark:bg-blue-800/50 border-blue-300 dark:border-blue-600;
+}
+
+.heap-object {
+    @apply bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-600;
+}
+
+.heap-object .object-header {
+    @apply bg-green-100 dark:bg-green-800/50 border-green-300 dark:border-green-600;
+}
+
+/* Arrow SVG positioning */
+#arrows-svg {
+    @apply pointer-events-none;
+    z-index: 10;
+}
+
+/* Enhanced Python Tutor Style Object Groups */
+.object-group {
+    margin-bottom: 1.5rem;
+}
+
+.object-group-header {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .object-group-header {
+    border-bottom-color: #4b5563;
+}
+
+/* Enhanced Object Box Styling */
+.object-box {
+    background-color: white;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.object-box:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transform: scale(1.02);
+}
+
+.dark .object-box {
+    background-color: #374151;
+    border-color: #4b5563;
+}
+
+.object-box.function-object {
+    border-color: #86efac;
+    background-color: #f0fdf4;
+}
+
+.dark .object-box.function-object {
+    border-color: #059669;
+    background-color: rgba(6, 78, 59, 0.2);
+}
+
+.object-box.list-object {
+    border-color: #c084fc;
+    background-color: #faf5ff;
+}
+
+.dark .object-box.list-object {
+    border-color: #7c3aed;
+    background-color: rgba(88, 28, 135, 0.2);
+}
+
+.object-box.instance-object {
+    border-color: #fdba74;
+    background-color: #fff7ed;
+}
+
+.dark .object-box.instance-object {
+    border-color: #ea580c;
+    background-color: rgba(154, 52, 18, 0.2);
+}
+
+.object-box.other-object {
+    border-color: #d1d5db;
+    background-color: #f9fafb;
+}
+
+.dark .object-box.other-object {
+    border-color: #4b5563;
+    background-color: rgba(31, 41, 55, 0.5);
+}
+
+.object-header {
+    padding: 0.5rem 0.75rem;
+    background-color: #f3f4f6;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dark .object-header {
+    background-color: #4b5563;
+    border-bottom-color: #6b7280;
+}
+
+.object-box.function-object .object-header {
+    background-color: #dcfce7;
+    border-bottom-color: #bbf7d0;
+}
+
+.dark .object-box.function-object .object-header {
+    background-color: rgba(6, 78, 59, 0.3);
+    border-bottom-color: #059669;
+}
+
+.object-box.list-object .object-header {
+    background-color: #f3e8ff;
+    border-bottom-color: #e9d5ff;
+}
+
+.dark .object-box.list-object .object-header {
+    background-color: rgba(88, 28, 135, 0.3);
+    border-bottom-color: #7c3aed;
+}
+
+.object-box.instance-object .object-header {
+    background-color: #fed7aa;
+    border-bottom-color: #fde68a;
+}
+
+.dark .object-box.instance-object .object-header {
+    background-color: rgba(154, 52, 18, 0.3);
+    border-bottom-color: #ea580c;
+}
+
+.object-type {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #374151;
+}
+
+.dark .object-type {
+    color: #d1d5db;
+}
+
+.object-address {
+    font-size: 0.75rem;
+    font-family: monospace;
+    color: #6b7280;
+    background-color: #e5e7eb;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.dark .object-address {
+    color: #9ca3af;
+    background-color: #374151;
+}
+
+.object-content {
+    padding: 0.75rem;
+}
+
+.object-content>*+* {
+    margin-top: 0.5rem;
+}
+
+.object-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.875rem;
+}
+
+.field-name {
+    font-weight: 500;
+    color: #4b5563;
+    margin-right: 0.75rem;
+    min-width: 0;
+}
+
+.dark .field-name {
+    color: #9ca3af;
+}
+
+.field-value {
+    font-family: monospace;
+    color: #111827;
+    background-color: #f9fafb;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    border: 1px solid #e5e7eb;
+    font-size: 0.75rem;
+    flex: 1;
+    text-align: right;
+}
+
+.dark .field-value {
+    color: #f9fafb;
+    background-color: #1f2937;
+    border-color: #374151;
+}
+
+.field-value.pointer-variable {
+    background-color: #dbeafe;
+    color: #1e40af;
+    border-color: #93c5fd;
+    cursor: pointer;
+    transition: colors 0.2s ease;
+}
+
+.field-value.pointer-variable:hover {
+    background-color: #bfdbfe;
+}
+
+.dark .field-value.pointer-variable {
+    background-color: rgba(30, 58, 138, 0.3);
+    color: #93c5fd;
+    border-color: #3b82f6;
+}
+
+.dark .field-value.pointer-variable:hover {
+    background-color: rgba(30, 58, 138, 0.5);
+}
+
+/* Enhanced Frame Styling */
+.frame-box {
+    background-color: white;
+    border: 2px solid #d1d5db;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.frame-box:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border-color: #60a5fa;
+}
+
+.dark .frame-box {
+    background-color: #374151;
+    border-color: #4b5563;
+}
+
+.dark .frame-box:hover {
+    border-color: #3b82f6;
+}
+
+.frame-header {
+    padding: 0.75rem 1rem;
+    background: linear-gradient(to right, #eff6ff, #dbeafe);
+    border-bottom: 1px solid #e5e7eb;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+}
+
+.dark .frame-header {
+    background: linear-gradient(to right, rgba(30, 58, 138, 0.3), rgba(30, 64, 175, 0.3));
+    color: #93c5fd;
+    border-bottom-color: #4b5563;
+}
+
+.frame-header::before {
+    content: "📋";
+    margin-right: 0.5rem;
+}
+
+.variable-box.pointer-variable {
+    position: relative;
+}
+
+.variable-box.pointer-variable::after {
+    content: "→";
+    position: absolute;
+    right: -0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #3b82f6;
+    font-weight: 700;
+}
+
+.dark .variable-box.pointer-variable::after {
+    color: #60a5fa;
+}
+
+/* Arrow Animation Enhancement */
+@keyframes draw-arrow {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* Focus and accessibility improvements */
+.variable-box:focus,
+.object-box:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+.dark .variable-box:focus,
+.dark .object-box:focus {
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5);
+}
+
+/* React Flow Custom Styles */
+.react-flow {
+    background-color: #f9fafb;
+}
+
+.dark .react-flow {
+    background-color: #111827;
+}
+
+/* React Flow controls styling */
+.react-flow__controls {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dark .react-flow__controls {
+    background: #374151;
+    border-color: #4b5563;
+}
+
+.react-flow__controls-button {
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    color: #374151;
+    transition: all 0.2s ease;
+}
+
+.react-flow__controls-button:hover {
+    background: #f3f4f6;
+}
+
+.dark .react-flow__controls-button {
+    background: #374151;
+    border-bottom-color: #4b5563;
+    color: #d1d5db;
+}
+
+.dark .react-flow__controls-button:hover {
+    background: #4b5563;
+}
+
+/* React Flow attribution */
+.react-flow__attribution {
+    background: rgba(255, 255, 255, 0.8);
+    color: #6b7280;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.dark .react-flow__attribution {
+    background: rgba(17, 24, 39, 0.8);
+    color: #9ca3af;
+}
+
+/* Custom node animations */
+.react-flow__node {
+    transition: all 0.2s ease;
+}
+
+.react-flow__node:hover {
+    transform: scale(1.02);
+}
+
+/* Edge label styling */
+.react-flow__edge-text {
+    fill: #374151;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.dark .react-flow__edge-text {
+    fill: #d1d5db;
+}
+
+/* Background pattern for dark mode */
+.dark .react-flow__background {
+    background-color: #111827;
+}
+
+.dark .react-flow__background .react-flow__background-pattern {
+    stroke: #374151;
+}

@@ -1,6 +1,7 @@
 import { attachmentRouter } from "./routers/attachment";
 import { authRouter } from "./routers/auth";
 import { postRouter } from "./routers/post";
+import { projectRouter } from "./routers/project";
 import { userRouter } from "./routers/user";
 import { router } from "./trpc";
 
@@ -14,6 +15,7 @@ export const appRouter = router({
   user: userRouter,
   post: postRouter,
   attachment: attachmentRouter,
+  project: projectRouter,
 });
 
 // export type definition of API

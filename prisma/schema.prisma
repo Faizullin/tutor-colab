@@ -26,11 +26,13 @@ model UserAccount {
 
   posts Post[]
 
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  provider   String?
-  lastLogin  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  provider  String?
+  lastLogin DateTime?
+
   Attachment Attachment[]
+  Project    Project[]
 }
 
 model Post {
@@ -65,6 +67,8 @@ model Attachment {
   // generic relation 
   objectId   Int?
   objectType ContentTypeGeneric?
+  Project    Project?            @relation(fields: [projectId], references: [id])
+  projectId  Int?
 }
 
 enum UserRole {
@@ -76,4 +80,37 @@ enum ContentTypeGeneric {
   UserAccount
   Post
   Attachment
+}
+
+model Project {
+  id          Int     @id @default(autoincrement())
+  slug        String  @unique
+  name        String
+  description String?
+
+  files ProjectFile[]
+
+  owner   UserAccount @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Attachment Attachment[]
+}
+
+model ProjectFile {
+  id      Int    @id @default(autoincrement())
+  name    String
+  path    String // e.g., "/src/index.js", "/README.md" (unique within a project)
+  content String @default("")
+
+  projectId Int
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Ensure unique paths within a project
+  @@unique([projectId, path])
 }

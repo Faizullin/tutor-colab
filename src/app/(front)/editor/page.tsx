@@ -22,14 +22,14 @@ export default function EditorPage() {
   const router = useRouter();
   const session = useSession();
 
-  const {
-    selectedFile,
-    fileContent,
-    setFileContent,
-    saveFileContent,
-    isLoading: isFileLoading,
-    isDirty
-  } = useFileStore();
+  // const {
+  //   selectedFile,
+  //   fileContent,
+  //   setFileContent,
+  //   saveFileContent,
+  //   isLoading: isFileLoading,
+  //   isDirty
+  // } = useFileStore();
 
   const [language, setLanguage] = useState<SupportedLanguage>("javascript");
   const [output, setOutput] = useState("");
@@ -353,13 +353,13 @@ export default function EditorPage() {
                           }
                         />
 
-                        <CodeSuggestion
+                        {/* <CodeSuggestion
                           ref={codeSuggestionRef}
                           code={fileContent}
                           editorRef={editorRef}
                           onApplySuggestion={setFileContent}
                           isEnabled={aiSuggestionsEnabled}
-                        />
+                        /> */}
                       </div>
                     </div>
                   ) : (
@@ -374,10 +374,10 @@ export default function EditorPage() {
               <ResizableHandle withHandle className="bg-[#252525] hover:bg-[#2a2a2a] transition-colors" />
 
               <ResizablePanel defaultSize={30} className="min-h-[15%]">
-                <TerminalPanel
+                {/* <TerminalPanel
                   output={output}
                   status={status}
-                />
+                /> */}
               </ResizablePanel>
             </ResizablePanelGroup>
           </ResizablePanel>

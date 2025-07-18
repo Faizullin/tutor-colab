@@ -1,12 +1,9 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   FilesIcon,
-  Search,
-  SettingsIcon,
-  Settings
+  SettingsIcon
 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface SidebarNavProps {
   activeTab: string;
@@ -33,11 +30,10 @@ export default function SidebarNav({ activeTab, onTabChange, collapsed = false }
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={`w-10 h-10 rounded-sm ${
-                    activeTab === item.id
+                  className={`w-10 h-10 rounded-sm ${activeTab === item.id
                       ? "bg-[#252525] text-emerald-400 border-l-2 border-emerald-600"
                       : "text-gray-400 hover:text-emerald-400 hover:bg-[#252525] transition-colors"
-                  }`}
+                    }`}
                   onClick={() => onTabChange(item.id)}
                 >
                   {item.icon}
@@ -50,7 +46,7 @@ export default function SidebarNav({ activeTab, onTabChange, collapsed = false }
           ))}
         </TooltipProvider>
       </div>
-      
+
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>

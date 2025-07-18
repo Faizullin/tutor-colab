@@ -7,16 +7,16 @@ import FileExplorer from "./file-explorer";
 import TerminalPanel from "./terminal-panel";
 import SidebarNav from "./sidebar-nav";
 import Editor from "@monaco-editor/react";
-import { defaultEditorOptions, SupportedLanguage } from "@/app/utils/editor-config";
-import { toast } from "react-hot-toast";
-import useFileStore from "@/app/store/useFileStore";
 import { Button } from "@/components/ui/button";
 import { Save, Lightbulb, Laptop, Smartphone, XCircle } from "lucide-react";
-import { useAIStore } from "../store/useAIStore";
-import CodeSuggestion from "@/components/CodeSuggestion/codeSuggesstion";
 import { Switch } from "@/components/ui/switch";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { defaultEditorOptions, SupportedLanguage } from "@/utils/editor-config";
+import useFileStore from "@/store/useFileStore";
+import { useAIStore } from "@/store/useAIStore";
+import { toast } from "sonner";
+import CodeSuggestion from "@/components/basic-editor/CodeSuggestion/codeSuggesstion";
 
 export default function EditorPage() {
   const router = useRouter();

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAccount } from "@/generated/prisma";
-import { trpc } from "@/lib/trpc";
+import { trpc } from "@/utils/trpc";
 import { motion } from "framer-motion";
 import {
   Calendar,

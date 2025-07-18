@@ -24,7 +24,7 @@ export const postsRouter = router({
                     createdAt: 'desc',
                 },
                 include: {
-                    user: {
+                    owner: {
                         select: {
                             username: true,
                         },

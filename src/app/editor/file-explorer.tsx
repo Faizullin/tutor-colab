@@ -1,22 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, ChevronDown, ChevronRight, FileCode, Folder, FolderOpen, Plus, Search, Trash2Icon, Edit, Loader2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
   DialogFooter,
-  DialogDescription
+  DialogHeader,
+  DialogTitle
 } from "@/components/ui/dialog";
-import useFileStore, { FileNode } from "@/app/store/useFileStore";
-import { toast } from "react-hot-toast";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import useFileStore, { FileNode } from "@/store/useFileStore";
+import { ChevronDown, ChevronRight, Edit, FileCode, Folder, FolderOpen, Plus, RefreshCw, Search, Trash2Icon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface FileExplorerItemProps {
   files: FileNode;
@@ -31,7 +31,7 @@ function FileExplorerItem({ files, level = 0, onFileSelect, onDeleteFile, onEdit
   const [expanded, setExpanded] = useState(files.expanded || false);
   const [isHovered, setIsHovered] = useState(false);
   const user = useSession();
-  
+
   const isSelected = selectedFile && selectedFile.name === files.name && selectedFile.type === files.type;
 
   if (files.type === "file") {
@@ -89,10 +89,10 @@ function FileExplorerItem({ files, level = 0, onFileSelect, onDeleteFile, onEdit
         <span className="text-sm font-medium">{files.name}</span>
       </div>
       {expanded && files.children?.map((child) => (
-        <FileExplorerItem 
-          key={child.name} 
-          files={child} 
-          level={level + 1} 
+        <FileExplorerItem
+          key={child.name}
+          files={child}
+          level={level + 1}
           onFileSelect={onFileSelect}
           onDeleteFile={onDeleteFile}
           onEditFile={onEditFile}
@@ -105,17 +105,17 @@ function FileExplorerItem({ files, level = 0, onFileSelect, onDeleteFile, onEdit
 
 export default function FileExplorer() {
   // Use the Zustand store
-  const { 
-    files, 
-    selectedFile, 
-    isLoading, 
-    fetchAllFiles, 
-    selectFile, 
-    createFile, 
+  const {
+    files,
+    selectedFile,
+    isLoading,
+    fetchAllFiles,
+    selectFile,
+    createFile,
     deleteFile,
     editCurrentFile
   } = useFileStore();
-  
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isNewFileModalOpen, setIsNewFileModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -156,11 +156,11 @@ export default function FileExplorer() {
         type: 'file',
         content: ''
       };
-      
+
       const updatedFiles = [...localFiles, newFile];
       setLocalFiles(updatedFiles);
       localStorage.setItem('localFiles', JSON.stringify(updatedFiles));
-      
+
       toast.success("File created locally!");
       setIsNewFileModalOpen(false);
       setFileName("");
@@ -196,13 +196,13 @@ export default function FileExplorer() {
       const updatedFiles = localFiles.filter(f => f.name !== fileToDelete.name);
       setLocalFiles(updatedFiles);
       localStorage.setItem('localFiles', JSON.stringify(updatedFiles));
-      
+
       toast.success("File deleted locally!");
       setIsDeleteModalOpen(false);
       setFileToDelete(null);
       return;
     }
-  
+
     try {
       setIsDeleting(true);
       await deleteFile(fileToDelete.name);
@@ -223,7 +223,7 @@ export default function FileExplorer() {
       toast.error("No file selected for editing.");
       return;
     }
-  
+
     if (!fileName.trim()) {
       toast.error("File name cannot be empty.");
       return;
@@ -231,22 +231,22 @@ export default function FileExplorer() {
 
     if (session.status !== 'authenticated') {
       // Edit file locally for unauthenticated users
-      const updatedFiles = localFiles.map(f => 
-        f.name === fileToEdit.name 
-          ? { ...f, name: fileName } 
+      const updatedFiles = localFiles.map(f =>
+        f.name === fileToEdit.name
+          ? { ...f, name: fileName }
           : f
       );
-      
+
       setLocalFiles(updatedFiles);
       localStorage.setItem('localFiles', JSON.stringify(updatedFiles));
-      
+
       toast.success(`File renamed to "${fileName}" locally!`);
       setIsEditModalOpen(false);
       setFileToEdit(null);
       setFileName("");
       return;
     }
-  
+
     try {
       setIsEditing(true);
       await editCurrentFile(fileName, fileToEdit.name);
@@ -278,25 +278,25 @@ export default function FileExplorer() {
     setIsEditModalOpen(true);
   };
 
-  const filteredFiles = searchTerm.trim() === "" 
-    ? files 
+  const filteredFiles = searchTerm.trim() === ""
+    ? files
     : files.map(folder => {
-        if (folder.type === "folder") {
-          const filteredChildren = folder.children?.filter(file => 
-            file.name.toLowerCase().includes(searchTerm.toLowerCase())
-          );
-          
-          return {
-            ...folder,
-            children: filteredChildren,
-            expanded: filteredChildren && filteredChildren.length > 0 ? true : folder.expanded
-          };
-        }
-        return folder;
-      }).filter(folder => 
-        folder.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        (folder.children && folder.children.length > 0)
-      );
+      if (folder.type === "folder") {
+        const filteredChildren = folder.children?.filter(file =>
+          file.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        return {
+          ...folder,
+          children: filteredChildren,
+          expanded: filteredChildren && filteredChildren.length > 0 ? true : folder.expanded
+        };
+      }
+      return folder;
+    }).filter(folder =>
+      folder.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (folder.children && folder.children.length > 0)
+    );
 
   useEffect(() => {
     fetchAllFiles();
@@ -307,21 +307,21 @@ export default function FileExplorer() {
       <div className="p-2 border-b border-gray-800 flex justify-between items-center">
         <span className="text-gray-300 text-sm font-medium">EXPLORER</span>
         <div className="flex gap-1">
-          <Button 
-            size="icon" 
-            variant="ghost" 
-            className="h-6 w-6 text-gray-400 hover:text-emerald-400 hover:bg-[#252525] transition-colors" 
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-6 w-6 text-gray-400 hover:text-emerald-400 hover:bg-[#252525] transition-colors"
             onClick={() => setIsNewFileModalOpen(true)}
             title="New File"
           >
             <Plus className="w-3.5 h-3.5" />
           </Button>
           {session.status === 'authenticated' && (
-            <Button 
-              size="icon" 
-              variant="ghost" 
-              className="h-6 w-6 text-gray-400 hover:text-emerald-400 hover:bg-[#252525] transition-colors" 
-              onClick={fetchAllFiles} 
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-6 w-6 text-gray-400 hover:text-emerald-400 hover:bg-[#252525] transition-colors"
+              onClick={fetchAllFiles}
               disabled={isLoading}
               title="Refresh"
             >
@@ -346,9 +346,9 @@ export default function FileExplorer() {
       <ScrollArea className="flex-1 overflow-auto">
         {filteredFiles.length > 0 ? (
           filteredFiles.map((file) => (
-            <FileExplorerItem 
-              key={file.name} 
-              files={file} 
+            <FileExplorerItem
+              key={file.name}
+              files={file}
               onFileSelect={handleFileSelect}
               onDeleteFile={initiateFileDelete}
               onEditFile={initiateFileEdit}
@@ -376,14 +376,14 @@ export default function FileExplorer() {
             className="bg-[#252525] border-gray-800 text-white focus:border-emerald-600 focus:ring-emerald-600 focus:ring-opacity-20"
           />
           <DialogFooter>
-            <Button 
-              variant="ghost" 
-              className="text-gray-300 hover:text-white hover:bg-[#2a2a2a]" 
+            <Button
+              variant="ghost"
+              className="text-gray-300 hover:text-white hover:bg-[#2a2a2a]"
               onClick={() => setIsNewFileModalOpen(false)}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleCreateFile}
               className="bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
             >
@@ -410,14 +410,14 @@ export default function FileExplorer() {
             className="bg-[#252525] border-gray-800 text-white focus:border-emerald-600 focus:ring-emerald-600 focus:ring-opacity-20"
           />
           <DialogFooter>
-            <Button 
-              variant="ghost" 
-              className="text-gray-300 hover:text-white hover:bg-[#2a2a2a]" 
+            <Button
+              variant="ghost"
+              className="text-gray-300 hover:text-white hover:bg-[#2a2a2a]"
               onClick={() => setIsEditModalOpen(false)}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleEditFile}
               className="bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
             >
@@ -437,14 +437,14 @@ export default function FileExplorer() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button 
-              variant="ghost" 
-              className="text-gray-300 hover:text-white hover:bg-[#2a2a2a]" 
+            <Button
+              variant="ghost"
+              className="text-gray-300 hover:text-white hover:bg-[#2a2a2a]"
               onClick={() => setIsDeleteModalOpen(false)}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleDeleteFile}
               variant="destructive"
               className="bg-red-600 hover:bg-red-700 text-white transition-colors"

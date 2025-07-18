@@ -1,10 +1,10 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Code2, Play, Menu, Save } from "lucide-react";
-import { languageOptions } from "../utils/constants";
-import { SupportedLanguage } from "../utils/editor-config";
-import AiButton from "@/components/AiButton";
-import ConversionCodePanel from "@/components/codeConversion/conversion";
+import { SupportedLanguage } from "@/utils/editor-config";
+import ConversionCodePanel from "@/components/basic-editor/codeConversion/conversion";
+import AiButton from "@/components/basic-editor/AiButton";
+import { languageOptions } from "@/utils/constants";
 
 interface EditorHeaderProps {
   language: SupportedLanguage;

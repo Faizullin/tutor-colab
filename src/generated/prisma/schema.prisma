@@ -26,16 +26,17 @@ model UserAccount {
 
   posts Post[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  provider  String?
-  lastLogin DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  provider   String?
+  lastLogin  DateTime?
+  Attachment Attachment[]
 }
 
 model Post {
   id Int @id @default(autoincrement())
 
-  user    UserAccount @relation(fields: [ownerId], references: [id])
+  owner   UserAccount @relation(fields: [ownerId], references: [id])
   ownerId Int
 
   title   String
@@ -47,7 +48,32 @@ model Post {
   @@index([ownerId])
 }
 
+model Attachment {
+  id           Int    @id @default(autoincrement())
+  filename     String
+  originalName String
+  size         Int
+  mimetype     String
+  url          String
+  path         String
+
+  owner   UserAccount? @relation(fields: [ownerId], references: [id])
+  ownerId Int?
+
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  // generic relation 
+  objectId   Int?
+  objectType ContentTypeGeneric?
+}
+
 enum UserRole {
   user
   admin
+}
+
+enum ContentTypeGeneric {
+  UserAccount
+  Post
+  Attachment
 }

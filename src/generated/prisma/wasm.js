@@ -142,6 +142,21 @@ exports.Prisma.PostScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.AttachmentScalarFieldEnum = {
+  id: 'id',
+  filename: 'filename',
+  originalName: 'originalName',
+  size: 'size',
+  mimetype: 'mimetype',
+  url: 'url',
+  path: 'path',
+  ownerId: 'ownerId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  objectId: 'objectId',
+  objectType: 'objectType'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -161,9 +176,16 @@ exports.UserRole = exports.$Enums.UserRole = {
   admin: 'admin'
 };
 
+exports.ContentTypeGeneric = exports.$Enums.ContentTypeGeneric = {
+  UserAccount: 'UserAccount',
+  Post: 'Post',
+  Attachment: 'Attachment'
+};
+
 exports.Prisma.ModelName = {
   UserAccount: 'UserAccount',
-  Post: 'Post'
+  Post: 'Post',
+  Attachment: 'Attachment'
 };
 
 /**

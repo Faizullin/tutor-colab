@@ -1,6 +1,7 @@
+import { attachmentRouter } from "./routers/attachment";
 import { authRouter } from "./routers/auth";
+import { postRouter } from "./routers/post";
 import { userRouter } from "./routers/user";
-import { postsRouter } from "./routers/post";
 import { router } from "./trpc";
 
 /**
@@ -9,9 +10,10 @@ import { router } from "./trpc";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = router({
-    auth: authRouter,
-    user: userRouter,
-    posts: postsRouter,
+  auth: authRouter,
+  user: userRouter,
+  post: postRouter,
+  attachment: attachmentRouter,
 });
 
 // export type definition of API

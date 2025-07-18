@@ -67,8 +67,6 @@
   background-color: rgba(239, 68, 68, 0.25) !important;
 }
 
-
-
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);

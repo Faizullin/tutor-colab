@@ -2,23 +2,33 @@
 
 import { TRPCReactProvider } from "@/server/provider";
 import NiceModal from "@/store/nice-modal-context";
-import { SessionProvider } from "next-auth/react";
-import { PropsWithChildren } from "react";
-import { ActiveThemeProvider } from "../dashboard/common/active-theme";
+import useAuthStore from "@/store/userAuthStore";
+import { SessionProvider, useSession } from "next-auth/react";
+import { PropsWithChildren, useEffect } from "react";
 
 export default function Providers({
   children,
-  activeThemeValue,
-}: PropsWithChildren<{
-  activeThemeValue: string;
-}>) {
+}: PropsWithChildren) {
   return (
     <SessionProvider>
-      <ActiveThemeProvider initialTheme={activeThemeValue}>
-        <TRPCReactProvider>
+      <TRPCReactProvider>
+        <UserProvider>
           <NiceModal.Provider>{children}</NiceModal.Provider>
-        </TRPCReactProvider>
-      </ActiveThemeProvider>
+        </UserProvider>
+      </TRPCReactProvider>
     </SessionProvider>
   );
 }
+
+const UserProvider = ({
+  children,
+}: PropsWithChildren) => {
+  const { data: session } = useSession();
+  const { setUser } = useAuthStore();
+  useEffect(() => {
+    if (session?.user) {
+      setUser(session.user as any);
+    }
+  }, [session, setUser]);
+  return <>{children}</>;
+};

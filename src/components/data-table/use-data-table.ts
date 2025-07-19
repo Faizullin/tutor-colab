@@ -1,5 +1,6 @@
 "use client";
 
+import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import {
   type ColumnFiltersState,
   type PaginationState,
@@ -28,7 +29,6 @@ import {
   useQueryStates,
 } from "nuqs";
 import * as React from "react";
-import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { getSortingStateParser } from "./parsers";
 import { ExtendedColumnSort } from "./types";
 
@@ -41,15 +41,15 @@ const THROTTLE_MS = 50;
 
 interface UseDataTableProps<TData>
   extends Omit<
-      TableOptions<TData>,
-      | "state"
-      | "pageCount"
-      | "getCoreRowModel"
-      | "manualFiltering"
-      | "manualPagination"
-      | "manualSorting"
-    >,
-    Required<Pick<TableOptions<TData>, "pageCount">> {
+    TableOptions<TData>,
+    | "state"
+    | "pageCount"
+    | "getCoreRowModel"
+    | "manualFiltering"
+    | "manualPagination"
+    | "manualSorting"
+  >,
+  Required<Pick<TableOptions<TData>, "pageCount">> {
   initialState?: Omit<Partial<TableState>, "sorting"> & {
     sorting?: ExtendedColumnSort<TData>[];
   };
@@ -208,8 +208,8 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
           const processedValue = Array.isArray(value)
             ? value
             : typeof value === "string" && /[^a-zA-Z0-9]/.test(value)
-            ? value.split(/[^a-zA-Z0-9]+/).filter(Boolean)
-            : [value];
+              ? value.split(/[^a-zA-Z0-9]+/).filter(Boolean)
+              : [value];
 
           filters.push({
             id: key,
@@ -291,5 +291,5 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
     manualFiltering: true,
   });
 
-  return { table, shallow, debounceMs, throttleMs };
+  return { table, shallow, debounceMs, throttleMs, filterValues: sorting };
 }

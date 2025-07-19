@@ -1,10 +1,9 @@
 import Providers from "@/components/layout/providers";
 import { Toaster } from "@/components/ui/sonner";
+import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { cookies } from "next/headers";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,15 +26,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const activeThemeValue = cookieStore.get("active_theme")?.value || "light";
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <NuqsAdapter>
-          <Providers activeThemeValue={activeThemeValue}>
+          <Providers>
             <Toaster />
             {children}
           </Providers>

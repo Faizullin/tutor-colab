@@ -9,12 +9,12 @@
  *  - Next‑Auth session: https://next-auth.js.org/getting-started/typescript
  */
 
+import { UserRole } from '@/generated/prisma';
+import { authOptions } from '@/lib/options';
 import { initTRPC, TRPCError } from '@trpc/server';
-import { getSession } from 'next-auth/react';
+import { getServerSession } from 'next-auth';
 import superjson from 'superjson';
 import { prisma } from '../lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/options';
 
 
 /* -------------------------------------------------------------------------- */
@@ -42,22 +42,33 @@ const t = initTRPC.context<Context>().create({
 export const router = t.router;
 export const publicProcedure = t.procedure;
 
+
 /** Auth‑gate middleware */
 const isAuthed = t.middleware(async ({ ctx, next }) => {
     if (!ctx.session || !ctx.session.user?.id) {
         throw new TRPCError({ code: 'UNAUTHORIZED' });
     }
     return next({
-        ctx: {
-            //   👇 every downstream resolver now knows `ctx.session.user.id` is string
-            session: ctx.session,
-        },
+        ctx,
     });
 });
 
 /** Use this for any procedure that requires a logged‑in user */
 export const protectedProcedure = t.procedure.use(isAuthed);
 
-/* Optional helpers --------------------------------------------------------- */
-export const mergeRouters = t.mergeRouters;
-export const createCallerFactory = t.createCallerFactory;
+const hasRole = (role: UserRole) => {
+    return t.middleware(async ({ ctx, next }) => {
+        const user = ctx.session!.user;
+        if (user.role !== role) {
+            throw new TRPCError({ code: 'FORBIDDEN', message: `You must be a ${role} to perform this action.` });
+        }
+        return next({
+            ctx: {
+                session: ctx.session,
+            },
+        });
+    });
+}
+
+// Use this for any procedure that requires a logged-in user with a specific role
+export const adminProcedure = protectedProcedure.use(hasRole(UserRole.admin));

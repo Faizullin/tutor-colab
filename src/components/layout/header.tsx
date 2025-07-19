@@ -9,13 +9,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import useAuthStore from "@/store/userAuthStore"
-import { CurrentUser } from "@/types/user"
 import { Code, LogOut, Menu, User, X } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Button } from "../ui/button"
+import { UserAccount, UserRole } from "@/generated/prisma"
 
 
 function Header() {
@@ -23,7 +23,7 @@ function Header() {
     const { user, setUser, logout } = useAuthStore()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const router = useRouter()
-    const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
+    const [currentUser, setCurrentUser] = useState<UserAccount | null>(null)
 
     const [isMounted, setIsMounted] = useState(false)
 
@@ -100,7 +100,7 @@ function Header() {
                                 Feedback
                             </Link>
                             {/* Only render admin link on client side after mounting */}
-                            {isMounted && currentUser?.isAdmin === true && (
+                            {isMounted && currentUser?.role === UserRole.admin && (
                                 <Link
                                     href="/admin/fetch-details"
                                     className="px-3 py-2 text-gray-300 hover:text-white transition-colors"
@@ -213,7 +213,7 @@ function Header() {
                                             Feedback
                                         </Link>
                                         {/* Only render admin link on client side after mounting */}
-                                        {isMounted && currentUser?.isAdmin === true && (
+                                        {isMounted && currentUser?.role === UserRole.admin && (
                                             <Link
                                                 href="/admin/fetch-details"
                                                 className="block px-3 py-2 rounded-md text-gray-300 hover:text-white hover:bg-[#252525] transition-colors"

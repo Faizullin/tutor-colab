@@ -15,40 +15,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Attachment } from "@/generated/prisma";
-import { useControlDialog } from "@/hooks/use-control-dialog";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Upload, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useControlDialog } from "@/hooks/use-control-dialog";
 
 interface UploadDialogProps {
-  control: ReturnType<typeof useControlDialog<Attachment>>;
+  control: ReturnType<typeof useAttachmentUploadDialogControl>;
 }
 
 function AttachmentUploadDialog({ control }: UploadDialogProps) {
   const { isOpen: open, close } = control;
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const queryClient = useQueryClient();
 
   const uploadMutation = useMutation({
     mutationFn: uploadAttachment,
     onSuccess: (response) => {
-      console.log("Upload response:", response);
-      if (response.success) {
-        toast.success("Upload successful", {
-          description: `${response.attachment?.name} has been uploaded.`,
-        });
-        queryClient.invalidateQueries({ queryKey: ["attachments"] });
-        setSelectedFiles([]);
-        setUploadProgress(0);
-        close();
-      } else {
-        toast.error("Upload failed", {
-          //   description: response.error || "An error occurred during upload.",
-        });
-        setUploadProgress(0);
-      }
+      setSelectedFiles([]);
+      setUploadProgress(0);
+      control.additional?.onSuccess?.(response.attachment);
+      close();
     },
     onError: () => {
       toast.error("Upload failed", {
@@ -216,12 +204,22 @@ const uploadAttachment = async (file: File) => {
 
   const data = await response.json();
   return {
-    success: true,
-    attachment: {
-      name: data.original_filename,
-      url: data.secure_url,
-      size: data.bytes,
-      type: data.resource_type,
-    },
+    attachment: data.attachment as Attachment,
   };
 };
+
+
+type TProps = {
+  onSuccess?: (attachment: Attachment) => void;
+}
+
+export const useAttachmentUploadDialogControl = (props: TProps) => {
+  const control = useControlDialog
+    <Attachment, TProps>(undefined, {
+      onSuccess: (attachment) => {
+        props.onSuccess?.(attachment);
+      },
+    });
+
+  return control;
+}

@@ -21,11 +21,13 @@ export const authOptions: NextAuthOptions = {
                 idToken: { label: "Firebase ID Token", type: "text" },
             },
             async authorize(credentials) {
-                if (!credentials?.idToken) {
-                    throw new Error("ID Token is required");
+                const parsed = AuthorizeFirebaseSchema.safeParse(credentials);
+                if (!parsed.success) {
+                    throw new Error(parsed.error.message);
                 }
+                const { idToken } = parsed.data;
                 try {
-                    const decoded = await adminAuth.verifyIdToken(credentials.idToken || "");
+                    const decoded = await adminAuth.verifyIdToken(idToken);
 
                     const email = decoded.email;
 

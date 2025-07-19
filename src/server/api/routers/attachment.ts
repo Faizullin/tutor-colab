@@ -1,7 +1,6 @@
 import { ContentTypeGeneric } from "@/generated/prisma";
 import cloudinary from "@/lib/cloudinary";
 import { documentIdValidator } from "@/lib/schema";
-import { prisma } from "@/server/lib/prisma";
 import z from "zod";
 import { baseQueryInputSchema } from "../schema";
 import { publicProcedure, router } from "../trpc";
@@ -25,7 +24,7 @@ const queryFilterSchema = baseQueryInputSchema.shape.filter.unwrap().extend({
 
 const queryOrderBySchema = baseQueryInputSchema.shape.orderBy.unwrap().extend({
   field: z
-    .enum(["createdAt", "updatedAt", "name", "originalName", "size", "type"])
+    .enum(["createdAt", "updatedAt", "size", "id"])
     .default("createdAt")
     .describe("The field to order files by."),
 });
@@ -39,13 +38,12 @@ const queryInputSchema = z
   .optional();
 
 export const attachmentRouter = router({
-  list: publicProcedure.input(queryInputSchema).query(async ({ input }) => {
+  list: publicProcedure.input(queryInputSchema).query(async ({ input, ctx }) => {
     const {
       filter = {},
-      orderBy = { field: "createdAt", direction: "desc" },
+      orderBy = { field: "id", direction: "desc" },
       pagination = { skip: 0, take: 20 },
     } = input || {};
-    console.log("Input for attachment list query:", input);
 
     const where: any = {};
 
@@ -68,16 +66,23 @@ export const attachmentRouter = router({
     if (filter.objectId) where.objectId = filter.objectId;
 
     const [items, total] = await Promise.all([
-      prisma.attachment.findMany({
+      ctx.prisma.attachment.findMany({
         where,
         orderBy: { [orderBy.field]: orderBy.direction },
         skip: pagination.skip,
         take: pagination.take,
       }),
-      prisma.attachment.count({ where }),
+      ctx.prisma.attachment.count({ where }),
     ]);
 
-    return { items, total };
+    return {
+      items,
+      total,
+      meta: {
+        take: pagination.take,
+        skip: pagination.skip,
+      }
+    };
   }),
 
   getById: publicProcedure
@@ -87,8 +92,8 @@ export const attachmentRouter = router({
       }
       return val;
     })
-    .query(async ({ input }) => {
-      return await prisma.attachment.findUnique({
+    .query(async ({ input, ctx }) => {
+      return await ctx.prisma.attachment.findUnique({
         where: { id: input },
       });
     }),
@@ -99,8 +104,8 @@ export const attachmentRouter = router({
         id: documentIdValidator(),
       })
     )
-    .mutation(async ({ input }) => {
-      const foundAttachment = await prisma.attachment.findUnique({
+    .mutation(async ({ input, ctx }) => {
+      const foundAttachment = await ctx.prisma.attachment.findUnique({
         where: { id: input.id },
       });
       if (!foundAttachment) {
@@ -116,7 +121,7 @@ export const attachmentRouter = router({
         }
       }
 
-      return await prisma.attachment.delete({
+      return await ctx.prisma.attachment.delete({
         where: { id: input.id },
       });
     }),

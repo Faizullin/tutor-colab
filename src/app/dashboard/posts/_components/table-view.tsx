@@ -1,6 +1,5 @@
 "use client";
 
-import AttachmentUploadDialog, { useAttachmentUploadDialogControl } from "@/components/attachment/attachment-upload-dialog";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton";
@@ -16,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { Attachment } from "@/generated/prisma";
+import { Post } from "@/generated/prisma";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/utils/trpc";
 import { Column, ColumnDef } from "@tanstack/react-table";
@@ -25,56 +24,37 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Heading } from "../../_components/common/heading";
 
-
-type QueryParams = Parameters<typeof trpc.attachment.list.useQuery>[0];
-type ActionType = "create" | "edit" | "delete";
-interface Action {
-  type: ActionType;
-  obj?: Attachment;
-}
+type QueryParams = Parameters<typeof trpc.post.adminList.useQuery>[0];
 
 export function TableView() {
-  const uploadDialogControl = useAttachmentUploadDialogControl({
-    onSuccess: () => {
-      refetch();
-      toast.success("Attachment uploaded successfully!");
-    },
-  });
-
-  const deleteConfirmDialogControl = useDeleteConfirmDialogControl<Attachment>({
+  const deleteConfirmDialogControl = useDeleteConfirmDialogControl<Post>({
     onConfirm: ({ items }) => {
       if (items?.length === 1) {
-        deleteMutation.mutateAsync({ id: items[0].id }).then(() => {
+        deleteMutation.mutateAsync(items[0].id).then(() => {
           deleteConfirmDialogControl.close();
-        })
+        });
       }
     },
   });
 
-  // Action handlers
-  const openCreateSheet = useCallback(() => {
-    uploadDialogControl.openWithData();
-  }, [uploadDialogControl]);
-
-  const openDeleteDialog = useCallback((obj: Attachment) => {
+  const openDeleteDialog = useCallback((obj: Post) => {
     deleteConfirmDialogControl.openWithData({
       items: [obj],
     });
   }, []);
 
-  // Replace with your actual delete mutation
-  const deleteMutation = trpc.attachment.delete.useMutation({
+  const deleteMutation = trpc.post.adminDelete.useMutation({
     onSuccess: () => {
       refetch();
-      toast.success("Attachment deleted successfully!");
+      toast.success("Post deleted successfully!");
     },
     onError: () => {
-      toast.error("Failed to delete attachment. Please try again.");
+      toast.error("Failed to delete post. Please try again.");
     },
   });
 
   // Define columns
-  const columns = useMemo<ColumnDef<Attachment>[]>(
+  const columns = useMemo<ColumnDef<Post>[]>(
     () => [
       {
         id: "select",
@@ -102,104 +82,46 @@ export function TableView() {
       },
       {
         id: "id",
-        header: ({ column }: { column: Column<Attachment, unknown> }) => (
+        header: ({ column }: { column: Column<Post, unknown> }) => (
           <DataTableColumnHeader column={column} title="Id" />
         ),
-        cell: ({ row }) => {
-          const obj = row.original;
-          return (
-            <Button variant="link" className={cn("w-full cursor-pointer")}>
-              {obj.id}
-            </Button>
-          );
-        },
+        cell: ({ row }) => (
+          <Button variant="link" className={cn("w-full cursor-pointer")}>
+            {row.original.id}
+          </Button>
+        ),
         enableHiding: false,
         enableSorting: true,
       },
       {
-        id: "originalName",
-        accessorKey: "originalName",
-        header: ({ column }: { column: Column<Attachment, unknown> }) => (
-          <DataTableColumnHeader column={column} title="Original name" />
+        accessorKey: "title",
+        header: "Title",
+        cell: ({ row }) => (
+          <div className="truncate max-w-[200px]">{row.original.title}</div>
         ),
-        cell: ({ row }) => {
-          const obj = row.original;
-          return (
-            <Button
-              variant="ghost"
-              className="h-auto p-0 text-left justify-start"
-            >
-              <div className="truncate max-w-[200px]">
-                {obj.originalName || "Untitled"}
-              </div>
-            </Button>
-          );
-        },
-        enableSorting: false,
+        enableSorting: true,
         enableColumnFilter: true,
       },
       {
-        accessorKey: "filename",
-        header: "Stored Filename",
-        sortable: true,
-        filterable: true,
-        enableHiding: true,
-      },
-      {
-        accessorKey: "mimetype",
-        header: "Type",
-        sortable: true,
-        filterable: true,
-        cell: ({ row }) => {
-          const mimetype = row.getValue("mimetype") as string;
-          // You could map mimetypes to more friendly names or icons
-          const typeMap: Record<string, string> = {
-            "image/jpeg": "JPEG Image",
-            "image/png": "PNG Image",
-            "application/pdf": "PDF Document",
-            "text/plain": "Text File",
-            // Add more as needed
-          };
-          return typeMap[mimetype] || mimetype;
-        },
-      },
-
-      {
-        accessorKey: "size",
-        header: "Size",
-        sortable: true,
-        cell: ({ row }) => {
-          const size = parseFloat(row.getValue("size"));
-          // Convert bytes to KB, MB, GB
-          if (size < 1024) return `${size} Bytes`;
-          if (size < 1024 * 1024) return `${(size / 1024).toFixed(2)} KB`;
-          if (size < 1024 * 1024 * 1024)
-            return `${(size / (1024 * 1024)).toFixed(2)} MB`;
-          return `${(size / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-        },
-      },
-      {
-        accessorKey: "ownerId",
+        accessorKey: "owner",
         header: "Owner",
-        sortable: true,
-        filterable: true, // You might filter by owner ID or name (if included)
-        cell: ({ row }) => {
-          // If you included owner in the Prisma query, you'd access row.original.owner.name
-          return row.getValue("ownerId") || "N/A"; // Or 'row.original.owner?.name'
-        },
+        cell: ({ row }) =>
+        (
+          <div className="truncate max-w-[150px]">
+            {(row.original as any).owner?.username || "Unknown"}
+          </div>
+        ),
+        enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         id: "createdAt",
         accessorKey: "createdAt",
-        header: ({ column }: { column: Column<Attachment, unknown> }) => (
+        header: ({ column }: { column: Column<Post, unknown> }) => (
           <DataTableColumnHeader column={column} title="Created" />
         ),
         cell: ({ row }) => {
-          const obj = row.original;
-          const date =
-            obj.createdAt instanceof Date
-              ? obj.createdAt
-              : new Date(obj.createdAt);
+          const date = new Date(row.original.createdAt);
           return (
             <div className="text-sm text-muted-foreground">
               {date.toLocaleDateString()}
@@ -212,15 +134,11 @@ export function TableView() {
       {
         id: "updatedAt",
         accessorKey: "updatedAt",
-        header: ({ column }: { column: Column<Attachment, unknown> }) => (
+        header: ({ column }: { column: Column<Post, unknown> }) => (
           <DataTableColumnHeader column={column} title="Updated" />
         ),
         cell: ({ row }) => {
-          const obj = row.original;
-          const date =
-            obj.updatedAt instanceof Date
-              ? obj.updatedAt
-              : new Date(obj.updatedAt);
+          const date = new Date(row.original.updatedAt);
           return (
             <div className="text-sm text-muted-foreground">
               {date.toLocaleDateString()}
@@ -238,7 +156,7 @@ export function TableView() {
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                 <Edit className="h-4 w-4" />
-                <span className="sr-only">Edit attachment</span>
+                <span className="sr-only">Edit post</span>
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -266,17 +184,16 @@ export function TableView() {
     [openDeleteDialog]
   );
 
-
-
-  const [parsedData, setParsedData] = useState<Attachment[]>([]);
-  const [parsedPageination, setParsedPagination] = useState({
+  const [parsedData, setParsedData] = useState<Post[]>([]);
+  const [parsedPagination, setParsedPagination] = useState({
     pageCount: 1,
   });
+
   // DataTable hook
   const { table } = useDataTable({
     data: parsedData,
     columns,
-    pageCount: parsedPageination.pageCount,
+    pageCount: parsedPagination.pageCount,
     initialState: {
       sorting: [{ id: "id", desc: true }],
     },
@@ -297,18 +214,19 @@ export function TableView() {
         skip: tableState.pagination.pageIndex * tableState.pagination.pageSize,
         take: tableState.pagination.pageSize,
       },
-    }
+    };
     if (tableState.sorting[0]) {
       parsed.orderBy = {
         field: tableState.sorting[0].id,
         direction: tableState.sorting[0].desc ? "desc" : "asc",
-      }
+      };
     }
     return parsed as QueryParams;
   }, [tableState.sorting, tableState.pagination, tableState.columnFilters]);
 
   // Fetch data with trpc
-  const { isLoading, data, error, refetch } = trpc.attachment.list.useQuery(queryParams);
+  const { isLoading, data, error, refetch } = trpc.post.adminList.useQuery(queryParams);
+
   useEffect(() => {
     if (!data) return;
     const parsed =
@@ -317,14 +235,11 @@ export function TableView() {
         createdAt: new Date(obj.createdAt),
         updatedAt: new Date(obj.updatedAt),
       })) || [];
-    setParsedData(parsed);
+    setParsedData(parsed as any);
     setParsedPagination({
       pageCount: Math.ceil(data.total / data.meta.take),
     });
-  }, [data,]);
-
-
-
+  }, [data]);
 
   if (error) {
     return (
@@ -336,12 +251,12 @@ export function TableView() {
     <>
       <div className="flex items-start justify-between">
         <Heading
-          title="Attachments"
-          description="Manage your attachments"
+          title="Posts"
+          description="Manage your posts"
         />
-        <Button onClick={openCreateSheet}>
+        <Button>
           <PlusIcon className="mr-2 h-4 w-4" />
-          Upload
+          New Post
         </Button>
       </div>
       <Separator />
@@ -357,8 +272,6 @@ export function TableView() {
       </div>
 
       <DeleteConfirmDialog control={deleteConfirmDialogControl} />
-
-      <AttachmentUploadDialog control={uploadDialogControl} />
     </>
   );
 }

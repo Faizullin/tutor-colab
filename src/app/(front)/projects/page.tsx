@@ -71,7 +71,7 @@ const container: Variants = {
 // Page component
 // -----------------------------------------------------------------------------
 export default function ProjectsPage() {
-  const projectsQuery = trpc.project.userProjectsList.useQuery();
+  const projectsQuery = trpc.project.protectedUserProjectList.useQuery();
 
   // Convert date strings coming from the API to Date objects once loaded
   const parsed = useMemo(() => {

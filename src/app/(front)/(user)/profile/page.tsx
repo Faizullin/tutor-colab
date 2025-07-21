@@ -10,15 +10,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserAccount } from "@/generated/prisma";
 import { trpc } from "@/utils/trpc";
 import { motion } from "framer-motion";
-import {
-  Calendar,
-  Clock,
-  Edit3,
-  Mail,
-  User as UserIcon
-} from "lucide-react";
+import { Calendar, Clock, Edit3, Mail, User as UserIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { EditProfileDialog } from "./_components/EditProfile";
+
+function getInitials(firstName?: string, lastName?: string) {
+  if (!firstName && !lastName) return "U";
+  return `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`;
+}
 
 function ProfilePage() {
   const loadUserDataQuery = trpc.auth.getCurrentUserAccount.useQuery();
@@ -33,28 +32,27 @@ function ProfilePage() {
     } else if (loadUserDataQuery.isLoading) {
       setLoading(true);
     }
-  }, [loadUserDataQuery.data, loadUserDataQuery.isLoading, loadUserDataQuery.isSuccess]);
+  }, [
+    loadUserDataQuery.data,
+    loadUserDataQuery.isLoading,
+    loadUserDataQuery.isSuccess,
+  ]);
 
   const handleUserUpdate = (updatedUser: UserAccount) => {
     setUser(updatedUser);
     setIsEditOpen(false);
   };
 
-  function getInitials(firstName?: string, lastName?: string) {
-    if (!firstName && !lastName) return "U";
-    return `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`;
-  }
-
   const formatDate = (dateString: Date | string) => {
     if (!dateString) return "N/A";
 
     const date = new Date(dateString);
     const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     };
 
     return date.toLocaleDateString(undefined, options);
@@ -80,7 +78,9 @@ function ProfilePage() {
                   <div className="bg-emerald-600 p-2 rounded-lg">
                     <UserIcon className="h-6 w-6 text-white" />
                   </div>
-                  <CardTitle className="text-white text-xl sm:text-2xl font-bold">User Profile</CardTitle>
+                  <CardTitle className="text-white text-xl sm:text-2xl font-bold">
+                    User Profile
+                  </CardTitle>
                 </div>
                 <Button
                   onClick={() => setIsEditOpen(true)}
@@ -104,7 +104,12 @@ function ProfilePage() {
                         transition={{ delay: 0.2, duration: 0.3 }}
                       >
                         <Avatar className="w-24 h-24 sm:w-32 sm:h-32 border-4 border-emerald-500 shadow-lg">
-                          {user.profileUrl && <AvatarImage src={user.profileUrl} alt={user.username} />}
+                          {user.profileUrl && (
+                            <AvatarImage
+                              src={user.profileUrl}
+                              alt={user.username}
+                            />
+                          )}
                           <AvatarFallback className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white text-2xl">
                             {getInitials(user.username)}
                           </AvatarFallback>
@@ -132,8 +137,7 @@ function ProfilePage() {
                           animate={{ y: 0, opacity: 1 }}
                           transition={{ delay: 0.4, duration: 0.4 }}
                           className="mt-4"
-                        >
-                        </motion.div>
+                        ></motion.div>
                       </div>
                     </div>
 
@@ -152,7 +156,9 @@ function ProfilePage() {
                             <Mail className="text-emerald-400 h-5 w-5 flex-shrink-0" />
                           </div>
                           <div>
-                            <span className="text-gray-400 text-sm block">Email</span>
+                            <span className="text-gray-400 text-sm block">
+                              Email
+                            </span>
                             <span className="break-all">{user.email}</span>
                           </div>
                         </motion.div>
@@ -167,8 +173,14 @@ function ProfilePage() {
                             <Clock className="text-emerald-400 h-5 w-5 flex-shrink-0" />
                           </div>
                           <div>
-                            <span className="text-gray-400 text-sm block">Last Login</span>
-                            <span>{user.lastLogin ? formatDate(user.lastLogin) : "Never"}</span>
+                            <span className="text-gray-400 text-sm block">
+                              Last Login
+                            </span>
+                            <span>
+                              {user.lastLogin
+                                ? formatDate(user.lastLogin)
+                                : "Never"}
+                            </span>
                           </div>
                         </motion.div>
 
@@ -182,7 +194,9 @@ function ProfilePage() {
                             <Calendar className="text-emerald-400 h-5 w-5 flex-shrink-0" />
                           </div>
                           <div>
-                            <span className="text-gray-400 text-sm block">Member Since</span>
+                            <span className="text-gray-400 text-sm block">
+                              Member Since
+                            </span>
                             <span>{formatDate(user.createdAt)}</span>
                           </div>
                         </motion.div>
@@ -197,7 +211,9 @@ function ProfilePage() {
                             <Calendar className="text-emerald-400 h-5 w-5 flex-shrink-0" />
                           </div>
                           <div>
-                            <span className="text-gray-400 text-sm block">Last Updated</span>
+                            <span className="text-gray-400 text-sm block">
+                              Last Updated
+                            </span>
                             <span>{formatDate(user.updatedAt)}</span>
                           </div>
                         </motion.div>
@@ -216,11 +232,12 @@ function ProfilePage() {
                     </div>
                     <h3 className="text-xl font-medium">No User Found</h3>
                     <p className="text-gray-400 mt-2 text-center max-w-sm">
-                      Please sign in to view your profile information and settings
+                      Please sign in to view your profile information and
+                      settings
                     </p>
                     <Button
                       className="mt-6 bg-emerald-600 hover:bg-emerald-700 text-white"
-                      onClick={() => window.location.href = "/auth/login"}
+                      onClick={() => (window.location.href = "/auth/login")}
                     >
                       Sign In
                     </Button>

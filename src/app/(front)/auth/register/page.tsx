@@ -1,43 +1,50 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { AlertCircle } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useRouter } from "next/navigation"
-import { signIn } from "next-auth/react"
-import useAuthStore from "@/store/userAuthStore"
+import type React from "react";
+import { useState } from "react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import useAuthStore from "@/store/userAuthStore";
 
 const RegisterPage = () => {
-  const router = useRouter()
-  const { setUser } = useAuthStore()
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  const router = useRouter();
+  const { setUser } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
-  })
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target
+    const { id, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [id]: value,
-    }))
-    setError("")
-  }
+    }));
+    setError("");
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
     try {
       const response = await fetch("/api/auth/register", {
@@ -46,12 +53,12 @@ const RegisterPage = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Registration failed")
+        throw new Error(data.message || "Registration failed");
       }
 
       // After successful registration, sign in
@@ -59,59 +66,66 @@ const RegisterPage = () => {
         redirect: false,
         email: formData.email,
         password: formData.password,
-      })
+      });
 
       if (result?.error) {
-        throw new Error("Failed to sign in after registration")
+        throw new Error("Failed to sign in after registration");
       }
 
-      setUser(data.user)
-      router.push("/")
+      setUser(data.user);
+      router.push("/");
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Registration failed")
+      setError(error instanceof Error ? error.message : "Registration failed");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleGoogleSignIn = async () => {
     try {
       const result = await signIn("google", {
         callbackUrl: "/",
         redirect: true,
-      })
+      });
       if (result?.error) {
-        setError("Failed to sign in with Google")
+        setError("Failed to sign in with Google");
       }
-    } catch (error) {
-      setError("An unexpected error occurred")
+    } catch {
+      setError("An unexpected error occurred");
     }
-  }
+  };
 
   const handleGitHubSignIn = async () => {
     try {
       const result = await signIn("github", {
         callbackUrl: "/",
         redirect: true,
-      })
+      });
       if (result?.error) {
-        setError("Failed to sign in with GitHub")
+        setError("Failed to sign in with GitHub");
       }
-    } catch (error) {
-      setError("An unexpected error occurred")
+    } catch {
+      setError("An unexpected error occurred");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#1e1e1e] py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md bg-[#1e1e1e] text-white border-gray-800">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Welcome to CodeX</CardTitle>
-          <CardDescription className="text-center text-gray-400">Create an account to get started</CardDescription>
+          <CardTitle className="text-2xl font-bold text-center">
+            Welcome to CodeX
+          </CardTitle>
+          <CardDescription className="text-center text-gray-400">
+            Create an account to get started
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
-            <Alert variant="destructive" className="mb-6 bg-red-900 border-red-600">
+            <Alert
+              variant="destructive"
+              className="mb-6 bg-red-900 border-red-600"
+            >
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
@@ -167,7 +181,11 @@ const RegisterPage = () => {
               />
             </div>
 
-            <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+              disabled={isLoading}
+            >
               {isLoading ? "Creating Account..." : "Create Account"}
             </Button>
           </form>
@@ -175,7 +193,9 @@ const RegisterPage = () => {
           <div className="relative my-6">
             <Separator className="bg-gray-800" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="bg-[#1e1e1e] px-2 text-gray-400 text-sm">Or continue with</span>
+              <span className="bg-[#1e1e1e] px-2 text-gray-400 text-sm">
+                Or continue with
+              </span>
             </div>
           </div>
 
@@ -213,7 +233,11 @@ const RegisterPage = () => {
               className="w-full bg-[#f6f5f5] text-black border-gray-800 hover:bg-[#cacaca]"
               disabled={isLoading}
             >
-              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+              <svg
+                className="mr-2 h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
                 <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.026A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.026 2.747-1.026.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
               </svg>
               Sign in with GitHub
@@ -223,14 +247,17 @@ const RegisterPage = () => {
         <CardFooter className="flex justify-center">
           <p className="text-sm text-gray-400">
             Already have an account?{" "}
-            <a href="/auth/login" className="text-emerald-400 hover:text-emerald-300 font-medium">
+            <a
+              href="/auth/login"
+              className="text-emerald-400 hover:text-emerald-300 font-medium"
+            >
               Sign in
             </a>
           </p>
         </CardFooter>
       </Card>
     </div>
-  )
-}
+  );
+};
 
-export default RegisterPage
+export default RegisterPage;

@@ -3,7 +3,7 @@ import cloudinary from "@/lib/cloudinary";
 import { documentIdValidator } from "@/lib/schema";
 import z from "zod";
 import { baseQueryInputSchema } from "../schema";
-import { publicProcedure, router } from "../trpc";
+import { adminProcedure, router } from "../trpc";
 
 const queryFilterSchema = baseQueryInputSchema.shape.filter.unwrap().extend({
   name: z
@@ -38,75 +38,68 @@ const queryInputSchema = z
   .optional();
 
 export const attachmentRouter = router({
-  list: publicProcedure.input(queryInputSchema).query(async ({ input, ctx }) => {
-    const {
-      filter = {},
-      orderBy = { field: "id", direction: "desc" },
-      pagination = { skip: 0, take: 20 },
-    } = input || {};
+  adminList: adminProcedure
+    .input(queryInputSchema)
+    .query(async ({ input, ctx }) => {
+      const {
+        filter = {},
+        orderBy = { field: "id", direction: "desc" },
+        pagination = { skip: 0, take: 20 },
+      } = input || {};
 
-    const where: any = {};
+      const where: any = {};
 
-    // Enhanced search functionality - search across multiple fields
-    // This allows users to find files by either the system name or original filename
-    if (filter.name?.trim()) {
-      const searchTerm = filter.name.trim();
-      where.OR = [
-        { name: { contains: searchTerm, mode: "insensitive" } },
-        { originalName: { contains: searchTerm, mode: "insensitive" } },
-      ];
-    }
-
-    // Filter by MIME type (e.g., "image", "video", "pdf")
-    if (filter.type?.trim())
-      where.type = { contains: filter.type.trim(), mode: "insensitive" };
-
-    // Filter by object type and ID for scoped searches
-    if (filter.objectType) where.objectType = filter.objectType;
-    if (filter.objectId) where.objectId = filter.objectId;
-
-    const [items, total] = await Promise.all([
-      ctx.prisma.attachment.findMany({
-        where,
-        orderBy: { [orderBy.field]: orderBy.direction },
-        skip: pagination.skip,
-        take: pagination.take,
-      }),
-      ctx.prisma.attachment.count({ where }),
-    ]);
-
-    return {
-      items,
-      total,
-      meta: {
-        take: pagination.take,
-        skip: pagination.skip,
+      // Enhanced search functionality - search across multiple fields
+      // This allows users to find files by either the system name or original filename
+      if (filter.name?.trim()) {
+        const searchTerm = filter.name.trim();
+        where.OR = [
+          { name: { contains: searchTerm, mode: "insensitive" } },
+          { originalName: { contains: searchTerm, mode: "insensitive" } },
+        ];
       }
-    };
-  }),
 
-  getById: publicProcedure
-    .input((val: unknown) => {
-      if (typeof val !== "number") {
-        throw new Error("Invalid input: expected a number");
-      }
-      return val;
-    })
+      // Filter by MIME type (e.g., "image", "video", "pdf")
+      if (filter.type?.trim())
+        where.type = { contains: filter.type.trim(), mode: "insensitive" };
+
+      // Filter by object type and ID for scoped searches
+      if (filter.objectType) where.objectType = filter.objectType;
+      if (filter.objectId) where.objectId = filter.objectId;
+
+      const [items, total] = await Promise.all([
+        ctx.prisma.attachment.findMany({
+          where,
+          orderBy: { [orderBy.field]: orderBy.direction },
+          skip: pagination.skip,
+          take: pagination.take,
+        }),
+        ctx.prisma.attachment.count({ where }),
+      ]);
+
+      return {
+        items,
+        total,
+        meta: {
+          take: pagination.take,
+          skip: pagination.skip,
+        },
+      };
+    }),
+
+  adminDetail: adminProcedure
+    .input(documentIdValidator())
     .query(async ({ input, ctx }) => {
       return await ctx.prisma.attachment.findUnique({
         where: { id: input },
       });
     }),
 
-  delete: publicProcedure
-    .input(
-      z.object({
-        id: documentIdValidator(),
-      })
-    )
+  adminDelete: adminProcedure
+    .input(documentIdValidator())
     .mutation(async ({ input, ctx }) => {
       const foundAttachment = await ctx.prisma.attachment.findUnique({
-        where: { id: input.id },
+        where: { id: input },
       });
       if (!foundAttachment) {
         throw new Error("Attachment not found");
@@ -122,7 +115,7 @@ export const attachmentRouter = router({
       }
 
       return await ctx.prisma.attachment.delete({
-        where: { id: input.id },
+        where: { id: input },
       });
     }),
 });

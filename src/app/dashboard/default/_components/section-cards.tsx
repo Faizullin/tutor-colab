@@ -1,81 +1,106 @@
-import { TrendingUp, TrendingDown } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
-import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { FileText, Folder, Users, Image as ImageIcon } from "lucide-react";
+import Link from "next/link";
 
 export function SectionCards() {
   return (
     <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+      {/* Manage Posts Card */}
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Total Revenue</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">$1,250.00</CardTitle>
+          <CardDescription>Content Management</CardDescription>
+          <CardTitle className="text-2xl font-semibold @[250px]/card:text-3xl">
+            Manage Posts
+          </CardTitle>
           <CardAction>
-            <Badge variant="outline">
-              <TrendingUp />
-              +12.5%
-            </Badge>
+            <Link href="/dashboard/posts" passHref>
+              <FileText className="size-6 text-muted-foreground hover:text-primary transition-colors" />
+            </Link>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Trending up this month <TrendingUp className="size-4" />
+            Create, edit, and publish your articles and blog posts.
           </div>
-          <div className="text-muted-foreground">Visitors for the last 6 months</div>
+          <div className="text-muted-foreground">
+            Stay on top of your content strategy.
+          </div>
         </CardFooter>
       </Card>
+
+      {/* Manage Projects Card */}
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>New Customers</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">1,234</CardTitle>
+          <CardDescription>Project Overview</CardDescription>
+          <CardTitle className="text-2xl font-semibold @[250px]/card:text-3xl">
+            Manage Projects
+          </CardTitle>
           <CardAction>
-            <Badge variant="outline">
-              <TrendingDown />
-              -20%
-            </Badge>
+            <Link href="/dashboard/projects" passHref>
+              <Folder className="size-6 text-muted-foreground hover:text-primary transition-colors" />
+            </Link>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Down 20% this period <TrendingDown className="size-4" />
+            Oversee all ongoing and completed projects.
           </div>
-          <div className="text-muted-foreground">Acquisition needs attention</div>
+          <div className="text-muted-foreground">
+            Track progress and deadlines efficiently.
+          </div>
         </CardFooter>
       </Card>
+
+      {/* See Users Card */}
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Active Accounts</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">45,678</CardTitle>
+          <CardDescription>User Management</CardDescription>
+          <CardTitle className="text-2xl font-semibold @[250px]/card:text-3xl">
+            See Users
+          </CardTitle>
           <CardAction>
-            <Badge variant="outline">
-              <TrendingUp />
-              +12.5%
-            </Badge>
+            <Link href="/dashboard/users" passHref>
+              <Users className="size-6 text-muted-foreground hover:text-primary transition-colors" />
+            </Link>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Strong user retention <TrendingUp className="size-4" />
+            View and manage all registered users.
           </div>
-          <div className="text-muted-foreground">Engagement exceed targets</div>
+          <div className="text-muted-foreground">
+            Control access and user roles.
+          </div>
         </CardFooter>
       </Card>
+
+      {/* See Media Library Card */}
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Growth Rate</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">4.5%</CardTitle>
+          <CardDescription>Digital Assets</CardDescription>
+          <CardTitle className="text-2xl font-semibold @[250px]/card:text-3xl">
+            See Media Lib
+          </CardTitle>
           <CardAction>
-            <Badge variant="outline">
-              <TrendingUp />
-              +4.5%
-            </Badge>
+            <Link href="/dashboard/attachments" passHref>
+              <ImageIcon className="size-6 text-muted-foreground hover:text-primary transition-colors" />
+            </Link>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Steady performance increase <TrendingUp className="size-4" />
+            Access and organize your images, videos, and documents.
           </div>
-          <div className="text-muted-foreground">Meets growth projections</div>
+          <div className="text-muted-foreground">
+            Effortlessly manage your digital content.
+          </div>
         </CardFooter>
       </Card>
     </div>

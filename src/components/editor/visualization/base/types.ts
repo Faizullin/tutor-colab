@@ -3,9 +3,9 @@ export interface ExecutionRequest {
   language?: string;
 }
 
-export interface ExecutionResponse {
+export interface ExecutionResponse<TData = string> {
   success: boolean;
-  data: string;
+  data: TData;
   url: string;
   user_uuid?: string;
   session_uuid?: string;

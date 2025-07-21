@@ -1,11 +1,8 @@
-import { ContentTypeGeneric } from "@/generated/prisma";
+import { UserRole } from "@/generated/prisma";
 import { documentIdValidator } from "@/lib/schema";
-import { prisma } from "@/server/lib/prisma";
 import z from "zod";
 import { baseQueryInputSchema } from "../schema";
-import { protectedProcedure, publicProcedure, router } from "../trpc";
-import { get } from "http";
-import { TRPCError } from "@trpc/server";
+import { adminProcedure, protectedProcedure, router } from "../trpc";
 
 const queryFilterSchema = baseQueryInputSchema.shape.filter.unwrap().extend({
   name: z
@@ -18,7 +15,7 @@ const queryFilterSchema = baseQueryInputSchema.shape.filter.unwrap().extend({
 
 const queryOrderBySchema = baseQueryInputSchema.shape.orderBy.unwrap().extend({
   field: z
-    .enum(["createdAt", "updatedAt", "name",])
+    .enum(["createdAt", "updatedAt", "name"])
     .default("createdAt")
     .describe("The field to order files by."),
 });
@@ -31,122 +28,260 @@ const queryInputSchema = z
   })
   .optional();
 
-
-
-const isProjectOwner = protectedProcedure.use(async ({ ctx, next, rawInput, input }) => {
-  console.log("Checking project ownership with input:", rawInput, input);
-  const parsedInput = rawInput as { slug: string };
-  if (!parsedInput.slug) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Project slug is required for this operation.",
+const documentSlugValidator = (zod = z) => {
+  return zod
+    .string()
+    .min(1)
+    .max(255)
+    .refine((val) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(val), {
+      message: "Document slug must be a valid slug format",
     });
-  }
-
-  if (!projectOwnerEmail || projectOwnerEmail !== ctx.session.user.email) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "You are not the owner of this project.",
-    });
-  }
-
-  return next({
-    ctx: {
-      session: ctx.session,
-      // You can also pass the project object down to the resolver if needed
-      // project: fetchedProject,
-    },
-  });
-});
+};
 
 export const projectRouter = router({
-  list: publicProcedure.input(queryInputSchema).query(async ({ input }) => {
-    const {
-      filter = {},
-      orderBy = { field: "createdAt", direction: "desc" },
-      pagination = { skip: 0, take: 20 },
-    } = input || {};
+  adminList: adminProcedure
+    .input(queryInputSchema)
+    .query(async ({ ctx, input }) => {
+      const {
+        filter = {},
+        orderBy = { field: "createdAt", direction: "desc" },
+        pagination = { skip: 0, take: 20 },
+      } = input || {};
 
-    const where: any = {};
+      const where: any = {};
 
-    // Enhanced search functionality - search across multiple fields
-    // This allows users to find files by either the system name or original filename
-    if (filter.name?.trim()) {
-      const searchTerm = filter.name.trim();
-      where.OR = [
-        { name: { contains: searchTerm, mode: "insensitive" } },
-      ];
-    }
-
-    const [items, total] = await Promise.all([
-      prisma.project.findMany({
-        where,
-        orderBy: { [orderBy.field]: orderBy.direction },
-        skip: pagination.skip,
-        take: pagination.take,
-      }),
-      prisma.project.count({ where }),
-    ]);
-
-    return { items, total };
-  }),
-
-  userProjectsList: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
-    return await prisma.project.findMany({
-      where: { ownerId: userId },
-    });
-  }),
-
-  getById: publicProcedure
-    .input((val: unknown) => {
-      if (typeof val !== "number") {
-        throw new Error("Invalid input: expected a number");
+      // Enhanced search functionality - search across multiple fields
+      // This allows users to find files by either the system name or original filename
+      if (filter.name?.trim()) {
+        const searchTerm = filter.name.trim();
+        where.OR = [{ name: { contains: searchTerm, mode: "insensitive" } }];
       }
-      return val;
-    })
-    .query(async ({ input }) => {
-      return await prisma.project.findUnique({
+
+      const [items, total] = await Promise.all([
+        ctx.prisma.project.findMany({
+          where,
+          orderBy: { [orderBy.field]: orderBy.direction },
+          skip: pagination.skip,
+          take: pagination.take,
+        }),
+        ctx.prisma.project.count({ where }),
+      ]);
+
+      return {
+        items,
+        total,
+        meta: {
+          take: pagination.take,
+          skip: pagination.skip,
+        },
+      };
+    }),
+
+  adminCreate: adminProcedure
+    .input(
+      z.object({
+        name: z.string().min(3).max(255),
+        slug: documentSlugValidator(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { name, slug } = input;
+      const existingProject = await ctx.prisma.project.findUnique({
+        where: { slug },
+      });
+      if (existingProject) {
+        throw new Error("Project with this slug already exists");
+      }
+      return await ctx.prisma.project.create({
+        data: {
+          name,
+          slug,
+          ownerId: ctx.session!.user.id,
+        },
+      });
+    }),
+
+  adminDetail: adminProcedure
+    .input(documentIdValidator())
+    .query(async ({ input, ctx }) => {
+      return await ctx.prisma.project.findUnique({
         where: { id: input },
       });
     }),
 
-  getUserProjectBySlug: protectedProcedure
-    .input(z.string())
-    .query(async ({ input, ctx }) => {
-      const foundProject = await prisma.project.findUnique({
-        where: { slug: input },
+  adminDelete: adminProcedure
+    .input(documentIdValidator())
+    .mutation(async ({ input, ctx }) => {
+      const foundAttachment = await ctx.prisma.project.findUnique({
+        where: { id: input },
       });
-      if (!foundProject) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Project not found",
-        });
+      if (!foundAttachment) {
+        throw new Error("Attachment not found");
       }
-      if (ctx.session.user.id !== foundProject.ownerId) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this project.",
-        });
-      }
-      return foundProject;
+
+      return await ctx.prisma.project.delete({
+        where: { id: input },
+      });
     }),
 
-  delete: publicProcedure
+  protectedUserProjectList: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session!.user.id;
+    return await ctx.prisma.project.findMany({
+      where: { ownerId: userId },
+    });
+  }),
+
+  protectedUserProjectDetailBySlug: protectedProcedure
+    .input(documentSlugValidator())
+    .query(async ({ input, ctx }) => {
+      const projectObj = await ctx.prisma.project.findUnique({
+        where: { slug: input },
+        include: {
+          files: {
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+            },
+          },
+        },
+      });
+      if (!projectObj) {
+        throw new Error("Project not found");
+      }
+      const isAdmin = ctx.session!.user.role === UserRole.admin;
+      if (projectObj.id === ctx.session!.user.id && !isAdmin) {
+        throw new Error("You are not authorized to access this project");
+      }
+      return projectObj;
+    }),
+
+  protectedUserProjectFileList: protectedProcedure
+    .input(documentIdValidator())
+    .query(async ({ input, ctx }) => {
+      const userId = ctx.session!.user.id;
+      const project = await ctx.prisma.project.findUnique({
+        where: { id: input },
+      });
+
+      if (!project) {
+        throw new Error("Project not found or you do not have access");
+      }
+
+      if (project.ownerId !== userId) {
+        throw new Error("You do not have permission to access this project");
+      }
+
+      return await ctx.prisma.projectFile.findMany({
+        where: { projectId: project.id },
+      });
+    }),
+
+  protectedSaveProjectFileContent: protectedProcedure
     .input(
       z.object({
         id: documentIdValidator(),
+        content: z.string().optional(),
+        name: z.string().min(1).max(255).optional(),
+        language: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
-      const foundProject = await prisma.project.findUnique({
+    .mutation(async ({ input, ctx }) => {
+      const projectFile = await ctx.prisma.projectFile.findUnique({
         where: { id: input.id },
       });
-      if (!foundProject) {
+      if (!projectFile) {
+        throw new Error("Project file not found");
+      }
+      const parentProject = await ctx.prisma.project.findUnique({
+        where: { id: projectFile.projectId },
+      });
+      if (!parentProject) {
+        throw new Error("Parent project not found");
+      }
+      if (parentProject.ownerId !== ctx.session!.user.id) {
+        throw new Error("You do not have permission to edit this project file");
+      }
+      const data = {...input}
+      return await ctx.prisma.projectFile.update({
+        where: { id: projectFile.id },
+        data,
+      });
+    }),
+
+  protectedAddProjectFile: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(255),
+        language: z.string().optional(),
+        projectId: documentIdValidator(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const projectObj = await ctx.prisma.project.findUnique({
+        where: { id: input.projectId },
+      });
+      if (!projectObj) {
         throw new Error("Project not found");
       }
-      return await prisma.project.delete({
-        where: { id: foundProject.id },
+      if (projectObj.ownerId !== ctx.session!.user.id) {
+        throw new Error(
+          "You do not have permission to add files to this project"
+        );
+      }
+      const newFile = await ctx.prisma.projectFile.create({
+        data: {
+          name: input.name,
+          language: input.language,
+          projectId: projectObj.id,
+          path: "",
+        },
+      });
+      const newPath = `Path:${projectObj.slug}/${newFile.id}`;
+      return await ctx.prisma.projectFile.update({
+        where: { id: newFile.id },
+        data: { path: newPath },
+      });
+    }),
+
+  protectedDeleteProjectFile: protectedProcedure
+    .input(documentIdValidator())
+    .mutation(async ({ input, ctx }) => {
+      const projectFile = await ctx.prisma.projectFile.findUnique({
+        where: { id: input },
+      });
+      if (!projectFile) {
+        throw new Error("Project file not found");
+      }
+      const parentProject = await ctx.prisma.project.findUnique({
+        where: { id: projectFile.projectId },
+      });
+      if (!parentProject) {
+        throw new Error("Parent project not found");
+      }
+      if (parentProject.ownerId !== ctx.session!.user.id) {
+        throw new Error(
+          "You do not have permission to delete this project file"
+        );
+      }
+      return await ctx.prisma.projectFile.delete({
+        where: { id: projectFile.id },
+      });
+    }),
+
+  protectedDeleteProject: protectedProcedure
+    .input(documentIdValidator())
+    .mutation(async ({ input, ctx }) => {
+      const project = await ctx.prisma.project.findUnique({
+        where: { id: input },
+      });
+      if (!project) {
+        throw new Error("Project not found");
+      }
+      if (project.ownerId !== ctx.session!.user.id) {
+        throw new Error("You do not have permission to delete this project");
+      }
+      return await ctx.prisma.project.delete({
+        where: { id: project.id },
       });
     }),
 });

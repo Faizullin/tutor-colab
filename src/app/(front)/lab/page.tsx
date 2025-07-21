@@ -1,10 +1,10 @@
-import { EditorProvider } from "@/components/editor/context";
+import { PythonTutorVisualizationEditorProvider } from "@/components/editor/context";
 import { EditorRender } from "@/components/editor/render";
 
 export default function LabPage() {
   return (
-    <EditorProvider>
+    <PythonTutorVisualizationEditorProvider>
       <EditorRender />
-    </EditorProvider>
+    </PythonTutorVisualizationEditorProvider>
   );
 }

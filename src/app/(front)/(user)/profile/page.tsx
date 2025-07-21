@@ -18,7 +18,7 @@ import {
   User as UserIcon
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { EditProfileDialog } from "./EditProfile";
+import { EditProfileDialog } from "./_components/EditProfile";
 
 function ProfilePage() {
   const loadUserDataQuery = trpc.auth.getCurrentUserAccount.useQuery();
@@ -122,7 +122,7 @@ function ProfilePage() {
                           </h3>
                           <div className="flex flex-wrap gap-2 mt-2 justify-center sm:justify-start">
                             <Badge className="bg-emerald-600 hover:bg-emerald-700 text-sm px-3 py-1">
-                              @{user.username}
+                              @{user.role}
                             </Badge>
                           </div>
                         </motion.div>

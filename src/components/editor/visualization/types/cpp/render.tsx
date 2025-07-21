@@ -1,3 +1,5 @@
+import { useProjectEditorContent } from "@/app/(front)/editor/_components/context";
+import { usePythonTutorVisualizationEditor } from "@/components/editor/context";
 import {
   addEdge,
   Background,
@@ -12,25 +14,18 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useState } from "react";
 import VisualizationCommon from "../../base/render";
-import { StackNode } from "./flow/StackNode";
-import CppVisualizationService from "./service";
-
-import { useEditor } from "@/components/editor/context";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import "@xyflow/react/dist/style.css";
 import { TraceStep } from "../../base/types";
 import { SettingsContextProvider, useSettingsContext } from "./context";
 import { HeapNode } from "./flow/HeapNode";
+import { StackNode } from "./flow/StackNode";
+import CppVisualizationService from "./service";
 
 export const CppVisualizationRender = () => {
-  const { executionTrace, currentVisualData, error, result, viewMode } =
-    useEditor();
+  const { executionTrace, error, result, viewMode } =
+    usePythonTutorVisualizationEditor();
 
   if (error) {
     return <VisualizationCommon.ErrorAlert error={error} />;
@@ -38,33 +33,14 @@ export const CppVisualizationRender = () => {
 
   if (executionTrace) {
     return (
-      <div className="h-full flex flex-col bg-background">
+      <div className="h-full flex flex-col bg-background dark">
         {/* className="space-y-6" */}
         <VisualizationCommon.Toolbar />
-        <ResizablePanelGroup direction="vertical" className="h-full w-full">
-          <ResizablePanel defaultSize={70} minSize={20} maxSize={90}>
-            {viewMode === "json" ? (
-              <VisualizationCommon.Render.Json />
-            ) : (
-              <MainVisualizationRender />
-            )}
-          </ResizablePanel>
-          <ResizableHandle
-            withHandle
-            className="bg-muted hover:bg-primary transition-colors"
-          />
-          <ResizablePanel defaultSize={30} minSize={10} maxSize={80}>
-            {/* Console/output panel below */}
-            <div className="h-full overflow-auto">
-              <VisualizationCommon.ConsoleOutput
-                stdout={
-                  executionTrace?.trace?.[currentVisualData.currentStep]
-                    ?.stdout || ""
-                }
-              />
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+        {viewMode === "json" ? (
+          <VisualizationCommon.Render.Json />
+        ) : (
+          <MainVisualizationRender />
+        )}
       </div>
     );
   }
@@ -95,7 +71,9 @@ const nodeColor = (node: Node) => {
 export const cppEditorService = new CppVisualizationService();
 
 const MainVisualizationRender = () => {
-  const { currentVisualData, executionTrace } = useEditor();
+  const { currentVisualData, executionTrace } =
+    usePythonTutorVisualizationEditor();
+  const { setOutput } = useProjectEditorContent();
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -118,10 +96,11 @@ const MainVisualizationRender = () => {
         }
         return node;
       });
+      setOutput(trace.stdout || "");
       setNodes(updated as any);
       setEdges(parsed.edges);
     },
-    [nodes, setEdges, setNodes]
+    [nodes, setEdges, setNodes, setOutput]
   );
 
   const [lastProcessedStep, setLastProcessedStep] = useState(
@@ -182,6 +161,7 @@ const MainVisualizationRender = () => {
           nodeTypes={nodeTypes as any}
           connectionMode={ConnectionMode.Loose}
           className="h-full"
+          colorMode="dark"
           fitView
           fitViewOptions={{ padding: 0.1 }}
           defaultEdgeOptions={{
@@ -211,16 +191,11 @@ const MainVisualizationRender = () => {
 };
 
 const TopToolbar = () => {
-  const { currentVisualData } = useEditor();
   const { showMemory, setShowMemory } = useSettingsContext();
 
   return (
     <VisualizationCommon.Render.Container className="mb-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-primary"></div>
-          Variable Visualization (Step {currentVisualData.currentStep + 1})
-        </h4>
         <label className="flex items-center text-xs text-gray-600">
           <input
             type="checkbox"

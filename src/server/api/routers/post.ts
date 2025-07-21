@@ -3,8 +3,6 @@ import { adminProcedure, publicProcedure, router } from "@/server/api/trpc";
 import { z } from "zod";
 import { baseQueryInputSchema } from "../schema";
 
-
-
 const queryFilterSchema = baseQueryInputSchema.shape.filter.unwrap().extend({
   title: z
     .string()
@@ -29,11 +27,22 @@ const queryInputSchema = z
   })
   .optional();
 
+const documentSlugValidator = (zod = z) => {
+  return zod
+    .string()
+    .min(1)
+    .max(255)
+    .refine((val) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(val), {
+      message: "Document slug must be a valid slug format",
+    });
+};
+
 const createPostInputSchema = z.object({
   title: z.string().min(2, {
     message: "Title must be at least 2 characters.",
   }),
   content: z.string().optional(),
+  slug: documentSlugValidator(),
 });
 
 export const postRouter = router({
@@ -49,9 +58,7 @@ export const postRouter = router({
       const where: any = {};
       if (filter.title?.trim()) {
         const searchTerm = filter.title.trim();
-        where.OR = [
-          { title: { contains: searchTerm, mode: "insensitive" } },
-        ];
+        where.OR = [{ title: { contains: searchTerm, mode: "insensitive" } }];
       }
 
       const [items, total] = await Promise.all([
@@ -70,7 +77,7 @@ export const postRouter = router({
         meta: {
           take: pagination.take,
           skip: pagination.skip,
-        }
+        },
       };
     }),
 
@@ -79,6 +86,16 @@ export const postRouter = router({
     .query(async ({ ctx, input }) => {
       const post = await ctx.prisma.post.findUnique({
         where: { id: input },
+      });
+      if (!post) throw new Error("Post not found");
+      return post;
+    }),
+
+  publicGetBySlug: publicProcedure
+    .input(z.string().min(1, "Slug is required"))
+    .query(async ({ ctx, input }) => {
+      const post = await ctx.prisma.post.findFirst({
+        where: { slug: input },
       });
       if (!post) throw new Error("Post not found");
       return post;
@@ -96,9 +113,7 @@ export const postRouter = router({
       const where: any = {};
       if (filter.title?.trim()) {
         const searchTerm = filter.title.trim();
-        where.OR = [
-          { title: { contains: searchTerm, mode: "insensitive" } },
-        ];
+        where.OR = [{ title: { contains: searchTerm, mode: "insensitive" } }];
       }
 
       const [items, total] = await Promise.all([
@@ -128,7 +143,7 @@ export const postRouter = router({
         meta: {
           take: pagination.take,
           skip: pagination.skip,
-        }
+        },
       };
     }),
 
@@ -154,21 +169,31 @@ export const postRouter = router({
   adminCreate: adminProcedure
     .input(createPostInputSchema)
     .mutation(async ({ ctx, input }) => {
+      const slug = input.slug;
+      const existingPost = await ctx.prisma.post.findUnique({
+        where: { slug },
+      });
+      if (existingPost) {
+        throw new Error("Post with this slug already exists");
+      }
       return {
         post: await ctx.prisma.post.create({
           data: {
             ownerId: ctx.session!.user.id,
             title: input.title,
             content: input.content || "",
+            slug: input.slug,
           },
         }),
       };
     }),
 
   adminUpdate: adminProcedure
-    .input(createPostInputSchema.extend({
-      id: documentIdValidator(),
-    }))
+    .input(
+      createPostInputSchema.extend({
+        id: documentIdValidator(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       return {
         post: await ctx.prisma.post.update({
@@ -189,4 +214,3 @@ export const postRouter = router({
       });
     }),
 });
-

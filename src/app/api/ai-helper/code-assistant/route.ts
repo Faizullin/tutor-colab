@@ -1,21 +1,20 @@
-import { NextResponse, NextRequest } from "next/server";
+import { authOptions } from "@/lib/options";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/options";
-import { aiRateLimit } from "@/lib/ratelimit";
-import redis from "@/redis/redis"; // Ensure it's configured for Upstash
-import UserLimitModel from "@/models/User_limit";
-import { ConnectoDatabase } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server";
+// import { aiRateLimit } from "@/lib/ratelimit";
+// import redis from "@/redis/redis"; // Ensure it's configured for Upstash
+// import UserLimitModel from "@/models/User_limit";
+// import { ConnectoDatabase } from "@/lib/db";
 
-const MAX_LOGGED_IN_REQUESTS = 5;
-const MAX_GUEST_REQUESTS = 2;
-const ONE_DAY_IN_SECONDS = 86400;
+// const MAX_LOGGED_IN_REQUESTS = 5;
+// const MAX_GUEST_REQUESTS = 2;
+// const ONE_DAY_IN_SECONDS = 86400;
 
 export async function POST(req: NextRequest) {
   try {
-    await ConnectoDatabase()
-    const { prompt, code, isGuest } = await req.json();
-    const session = await getServerSession(authOptions);
+    await getServerSession(authOptions);
+    const { prompt, code } = await req.json();
 
     if (!prompt || !code) {
       return NextResponse.json(
@@ -24,65 +23,64 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const userId = session?.user?.id || 'guest';
-    const MAX_DAILY_REQUESTS = isGuest ? MAX_GUEST_REQUESTS : MAX_LOGGED_IN_REQUESTS;
+    // const MAX_DAILY_REQUESTS = isGuest ? MAX_GUEST_REQUESTS : MAX_LOGGED_IN_REQUESTS;
 
-    // If user is not logged in and is a guest
-    if (isGuest) {
-      // Do guest-specific checks
-      const redisKey = `guest:daily_requests`;
-      const requestCount = await redis.incr(redisKey);
+    // // If user is not logged in and is a guest
+    // if (isGuest) {
+    //   // Do guest-specific checks
+    //   const redisKey = `guest:daily_requests`;
+    //   const requestCount = await redis.incr(redisKey);
 
-      // If this is the first request of the day, set expiry
-      if (requestCount === 1) {
-        await redis.expire(redisKey, ONE_DAY_IN_SECONDS);
-      }
+    //   // If this is the first request of the day, set expiry
+    //   if (requestCount === 1) {
+    //     await redis.expire(redisKey, ONE_DAY_IN_SECONDS);
+    //   }
 
-      if (requestCount > MAX_GUEST_REQUESTS) {
-        return NextResponse.json(
-          { message: `Guest users are limited to ${MAX_GUEST_REQUESTS} AI conversations per day.` },
-          { status: 429 }
-        );
-      }
-    } else {
-      // Logged-in user specific checks
-      // Check existing AI rate limit 
-      const limitResult = await aiRateLimit(userId);
-      if (!limitResult.success) {
-        return NextResponse.json(
-          { message: limitResult.message },
-          { status: 429 }
-        );
-      }
+    //   if (requestCount > MAX_GUEST_REQUESTS) {
+    //     return NextResponse.json(
+    //       { message: `Guest users are limited to ${MAX_GUEST_REQUESTS} AI conversations per day.` },
+    //       { status: 429 }
+    //     );
+    //   }
+    // } else {
+    //   // Logged-in user specific checks
+    //   // Check existing AI rate limit
+    //   const limitResult = await aiRateLimit(userId);
+    //   if (!limitResult.success) {
+    //     return NextResponse.json(
+    //       { message: limitResult.message },
+    //       { status: 429 }
+    //     );
+    //   }
 
-      // Check Redis for short-term limit for logged-in users
-      const redisKey = `user:${userId}:daily_requests`;
+    // // Check Redis for short-term limit for logged-in users
+    // const redisKey = `user:${userId}:daily_requests`;
 
-      // Increment request count atomically
-      const requestCount = await redis.incr(redisKey);
+    // // Increment request count atomically
+    // const requestCount = await redis.incr(redisKey);
 
-      // If this is the first request of the day, set expiry
-      if (requestCount === 1) {
-        await redis.expire(redisKey, ONE_DAY_IN_SECONDS);
-      }
+    // // If this is the first request of the day, set expiry
+    // if (requestCount === 1) {
+    //   await redis.expire(redisKey, ONE_DAY_IN_SECONDS);
+    // }
 
-      if (requestCount > MAX_LOGGED_IN_REQUESTS) {
-        return NextResponse.json(
-          { message: `You have exceeded the daily limit of ${MAX_LOGGED_IN_REQUESTS} AI requests.` },
-          { status: 429 }
-        );
-      }
+    // if (requestCount > MAX_LOGGED_IN_REQUESTS) {
+    //   return NextResponse.json(
+    //     { message: `You have exceeded the daily limit of ${MAX_LOGGED_IN_REQUESTS} AI requests.` },
+    //     { status: 429 }
+    //   );
+    // }
 
-      // Store the request count in the database for permanent tracking
-      await UserLimitModel.findOneAndUpdate(
-        { userId },
-        { $inc: { fileCount: 1 } },
-        { upsert: true, new: true }
-      );
-    }
+    // // Store the request count in the database for permanent tracking
+    // await UserLimitModel.findOneAndUpdate(
+    //   { userId },
+    //   { $inc: { fileCount: 1 } },
+    //   { upsert: true, new: true }
+    // );
+    // }
 
     const llm = new ChatGoogleGenerativeAI({
-      modelName: "gemini-1.5-flash",
+      model: "gemini-1.5-flash",
       apiKey: process.env.GOOGLE_GEMINI_API_KEY,
       maxOutputTokens: 3072,
       temperature: 0.7,

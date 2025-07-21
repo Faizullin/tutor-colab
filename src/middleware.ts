@@ -2,7 +2,7 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
 export default withAuth(
-  function middleware(req) {
+  function middleware() {
     return NextResponse.next();
   },
   {
@@ -11,11 +11,18 @@ export default withAuth(
         const { pathname } = req.nextUrl;
 
         // ✅ Allow public routes
-        const publicRoutes = ["/", "/auth/login", "/auth/register", "/editor", "/api/execute", "/api/code-converter", ""];
+        const publicRoutes = [
+          "/",
+          "/auth/login",
+          "/auth/register",
+          "/editor/demo",
+          "/api/execute",
+          "/api/code-converter",
+          "",
+        ];
         if (publicRoutes.includes(pathname)) {
           return true;
         }
-
 
         return !!token;
       },

@@ -1,26 +1,35 @@
 "use client";
 
 import type { Dispatch, PropsWithChildren, SetStateAction } from "react";
-import { createContext, useContext, useState } from "react";
-import { useLoadMutation } from "./hooks";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-import type { ExecutionTrace } from "./visualization/base/types";
-import { VisualDataType } from "./visualization/types";
+import { useProjectEditorContent } from "@/app/(front)/editor/_components/context";
+import { Log } from "@/lib/log";
+import { SupportedLanguage } from "@/utils/editor-config";
+import { toast } from "sonner";
+import { PythonTutorClientProvider } from "./provider";
+import { VisualDataType } from "./types";
+import type {
+  ExecutionResponse,
+  ExecutionTrace,
+} from "./visualization/base/types";
+
+const provider = new PythonTutorClientProvider();
 
 type EditorContextType = {
-  language: string;
-  setLanguage: Dispatch<SetStateAction<string>>;
   code: string;
   setCode: Dispatch<SetStateAction<string>>;
-  actions: {
-    loadMutation: ReturnType<typeof import("./hooks").useLoadMutation>;
-  };
-  // Visualization state
+  language: SupportedLanguage | null;
   executionTrace: ExecutionTrace | null;
   setExecutionTrace: Dispatch<SetStateAction<ExecutionTrace | null>>;
   goToStep: (step: number) => void;
-  isLoading: boolean;
-  setIsLoading: Dispatch<SetStateAction<boolean>>;
   error: string;
   setError: Dispatch<SetStateAction<string>>;
   result: string;
@@ -30,22 +39,62 @@ type EditorContextType = {
 
   currentVisualData: VisualDataType;
   setCurrentVisualData: Dispatch<SetStateAction<VisualDataType>>;
+  runCodeFn: (props: {
+    code: string;
+    language: SupportedLanguage | null;
+  }) => Promise<ExecutionResponse<ExecutionTrace | string> | void>;
 };
 
-const EditorContext = createContext<EditorContextType | undefined>(undefined);
+const EditorContext = createContext<EditorContextType>({
+  code: "",
+  setCode: function (): void {
+    throw new Error("Function not implemented.");
+  },
+  language: null,
+  executionTrace: null,
+  setExecutionTrace: function (): void {
+    throw new Error("Function not implemented.");
+  },
+  goToStep: function (): void {
+    throw new Error("Function not implemented.");
+  },
+  error: "",
+  setError: function (): void {
+    throw new Error("Function not implemented.");
+  },
+  result: "",
+  setResult: function (): void {
+    throw new Error("Function not implemented.");
+  },
+  viewMode: "visual",
+  setViewMode: function (): void {
+    throw new Error("Function not implemented.");
+  },
+  currentVisualData: {
+    currentStep: 0,
+    flow: {
+      nodes: {},
+      edges: {},
+    },
+  },
+  setCurrentVisualData: function (): void {
+    throw new Error("Function not implemented.");
+  },
+  runCodeFn: async () => {
+    throw new Error("Function not implemented.");
+  },
+});
 
-type EditorProviderProps = PropsWithChildren;
-
-export function EditorProvider({ children }: EditorProviderProps) {
-  const loadMutation = useLoadMutation();
+export function PythonTutorVisualizationEditorProvider({
+  children,
+  language,
+}: PropsWithChildren<{
+  language: SupportedLanguage | null;
+}>) {
   const [code, setCode] = useState("");
-  const [language, setLanguage] = useState("cpp");
-
-  // Visualization state
   const [executionTrace, setExecutionTrace] = useState<ExecutionTrace | null>(
     null
   );
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState("");
   const [viewMode, setViewMode] = useState<"visual" | "json">("visual");
@@ -57,6 +106,7 @@ export function EditorProvider({ children }: EditorProviderProps) {
       edges: {},
     },
   });
+  const { setOutput, setStatus, editorRef } = useProjectEditorContent();
 
   const goToStep = (step: number) => {
     if (executionTrace && step >= 0 && step < executionTrace.trace.length) {
@@ -67,19 +117,106 @@ export function EditorProvider({ children }: EditorProviderProps) {
     }
   };
 
+  const runCodeFn = useCallback(
+    async (props: { code: string; language: SupportedLanguage | null }) => {
+      if (!props.language) {
+        throw new Error("Language must be selected to run code.");
+      }
+      setOutput("Running...");
+      setStatus("idle");
+      const toastId = toast.loading("Running code...");
+      try {
+        const service = provider.getService(props.language as any);
+        const executionResponse = await provider.runCode(service, {
+          code: props.code,
+          language: props.language,
+        });
+        // if (response.status === 429) {
+        //   toast.error("Rate limit exceeded! Please try again later.");
+        //   setOutput("⚠️ Rate limit exceeded.");
+        //   setStatus("error");
+        //   return;
+        // }
+        if (!executionResponse.success) {
+          setOutput(`Error: ${executionResponse.error?.trim()}`);
+          setStatus("error");
+        } else {
+          let cleanOutput: string = "";
+          if (typeof executionResponse.data === "string") {
+            toast.error("Invalid response format. Expected ExecutionTrace.");
+            setOutput("Invalid response format.");
+            setStatus("error");
+            return;
+          } else {
+            if (executionResponse.data.trace.length > 0) {
+              const lastTraceStep =
+                executionResponse.data.trace[
+                  executionResponse.data.trace.length - 1
+                ];
+              cleanOutput = (
+                lastTraceStep.stdout ||
+                lastTraceStep.exception_msg ||
+                ""
+              )
+                .split("\n")
+                .filter((line: string) => line.trim() !== "")
+                .join("\n")
+                .trim();
+            }
+            setOutput(cleanOutput || "No output generated");
+            setStatus("success");
+            setExecutionTrace({
+              ...executionResponse.data,
+              status: "success",
+            });
+            toast.success("Code executed successfully!");
+          }
+        }
+        return executionResponse;
+      } catch (error) {
+        toast.error("Failed to execute code. Please try again.");
+        setOutput("Failed to execute code.");
+        setStatus("error");
+        Log.error("Execution error:", error);
+      } finally {
+        toast.dismiss(toastId);
+      }
+    },
+    [setOutput, setStatus]
+  );
+
+  const decorationsRef = useRef<string[]>([]);
+  useEffect(() => {
+    const currentLine =
+      executionTrace?.trace?.[currentVisualData.currentStep]?.line;
+    if (editorRef.current && currentLine) {
+      decorationsRef.current = editorRef.current.deltaDecorations(
+        decorationsRef.current,
+        [
+          {
+            range: new (window as any).monaco.Range(
+              currentLine,
+              1,
+              currentLine,
+              1
+            ),
+            options: {
+              isWholeLine: true,
+              className: "monaco-current-line-highlight",
+            },
+          },
+        ]
+      );
+    }
+  }, [currentVisualData.currentStep, editorRef, executionTrace?.trace]);
+
   const value = {
-    language,
-    setLanguage,
     code,
     setCode,
-    actions: {
-      loadMutation,
-    },
+    language,
     executionTrace,
     setExecutionTrace,
     goToStep,
-    isLoading,
-    setIsLoading,
     error,
     setError,
     result,
@@ -89,6 +226,7 @@ export function EditorProvider({ children }: EditorProviderProps) {
 
     currentVisualData,
     setCurrentVisualData,
+    runCodeFn,
   };
 
   return (
@@ -96,10 +234,12 @@ export function EditorProvider({ children }: EditorProviderProps) {
   );
 }
 
-export function useEditor() {
+export function usePythonTutorVisualizationEditor() {
   const context = useContext(EditorContext);
   if (context === undefined) {
-    throw new Error("useEditor must be used within an EditorProvider");
+    throw new Error(
+      "usePythonTutorVisualizationEditor must be used within an EditorProvider"
+    );
   }
   return context;
 }

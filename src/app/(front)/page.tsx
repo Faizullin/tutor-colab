@@ -188,7 +188,7 @@ function HeroSection() {
         <motion.div className="flex flex-col sm:flex-row gap-4 mb-8" variants={item}>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
-              onClick={() => router.push("/editor")}
+              onClick={() => router.push("/editor/demo")}
               className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-5 text-lg rounded-md flex items-center group transition-all"
             >
               Try CodeX
@@ -208,7 +208,7 @@ function HeroSection() {
 
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
-              onClick={() => router.push("/editor")}
+              onClick={() => router.push("/editor/demo")}
               variant="outline"
               className="border-gray-700 text-gray-950 hover:bg-gray-800 hover:text-white hover:border-gray-600  px-6 py-5 text-lg rounded-md"
             >
@@ -313,7 +313,7 @@ function AboutSection() {
           A Better Way to <span className="text-emerald-400">Code</span>
         </motion.h2>
         <motion.p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-xs sm:max-w-lg md:max-w-2xl mx-auto">
-          I'm building tools to make coding more intuitive and efficient
+          I&apos;m building tools to make coding more intuitive and efficient
         </motion.p>
       </motion.div>
 
@@ -1217,7 +1217,7 @@ function CTASection() {
 
             {/* CTA Button */}
             <motion.div
-              onClick={() => router.push("/editor")}
+              onClick={() => router.push("/editor/demo")}
               className="flex flex-col sm:flex-row gap-4"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}

@@ -44,30 +44,6 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  // // Mutation for login
-  // const mutation = useMutation({
-  //   mutationFn: async (data: LoginFormData) => {
-  //     const result = await signIn(DEFAULT_FIREBASE_CREDENTIALS_PROVIDER_NAME, {
-  //       redirect: false,
-  //       email: data.email,
-  //       password: data.password,
-  //     })
-  //     console.log("Login result:", result, data)
-  //     if (result?.error) throw new Error(result.error)
-  //     return result
-  //   },
-  //   onSuccess: async () => {
-  //     const response = await fetch("/api/auth/session")
-  //     const sessionData = await response.json()
-  //     setUser(sessionData?.user)
-  //     router.push("/")
-  //     setTimeout(() => window.location.reload(), 1500)
-  //   },
-  //   onError: (err: any) => {
-  //     setError(err.message || "An unexpected error occurred. Please try again.")
-  //   },
-  // })
-
   const onSubmit = (data: LoginFormData) => {
     setError("");
     loginMutation

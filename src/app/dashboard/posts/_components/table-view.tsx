@@ -5,7 +5,9 @@ import { DataTableColumnHeader } from "@/components/data-table/data-table-column
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { useDataTable } from "@/components/data-table/use-data-table";
-import DeleteConfirmDialog, { useDeleteConfirmDialogControl } from "@/components/resource/delete-confirm-dialog";
+import DeleteConfirmDialog, {
+  useDeleteConfirmDialogControl,
+} from "@/components/resource/delete-confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -20,13 +22,15 @@ import { cn } from "@/lib/utils";
 import { trpc } from "@/utils/trpc";
 import { Column, ColumnDef } from "@tanstack/react-table";
 import { Edit, MoreHorizontal, PlusIcon, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Heading } from "../../_components/common/heading";
 
 type QueryParams = Parameters<typeof trpc.post.adminList.useQuery>[0];
 
-export function TableView() {
+export function PostTableView() {
+  const router = useRouter();
   const deleteConfirmDialogControl = useDeleteConfirmDialogControl<Post>({
     onConfirm: ({ items }) => {
       if (items?.length === 1) {
@@ -37,11 +41,16 @@ export function TableView() {
     },
   });
 
-  const openDeleteDialog = useCallback((obj: Post) => {
-    deleteConfirmDialogControl.openWithData({
-      items: [obj],
-    });
-  }, []);
+  const deleteConfirmDialogControlOpenWithData =
+    deleteConfirmDialogControl.openWithData;
+  const openDeleteDialog = useCallback(
+    (obj: Post) => {
+      deleteConfirmDialogControlOpenWithData({
+        items: [obj],
+      });
+    },
+    [deleteConfirmDialogControlOpenWithData]
+  );
 
   const deleteMutation = trpc.post.adminDelete.useMutation({
     onSuccess: () => {
@@ -52,6 +61,13 @@ export function TableView() {
       toast.error("Failed to delete post. Please try again.");
     },
   });
+
+  const openEdit = useCallback(
+    (obj: Post) => {
+      router.push(`/dashboard/posts/${obj.id}/`);
+    },
+    [router]
+  );
 
   // Define columns
   const columns = useMemo<ColumnDef<Post>[]>(
@@ -81,12 +97,16 @@ export function TableView() {
         enableHiding: false,
       },
       {
-        id: "id",
+        accessorKey: "id",
         header: ({ column }: { column: Column<Post, unknown> }) => (
           <DataTableColumnHeader column={column} title="Id" />
         ),
         cell: ({ row }) => (
-          <Button variant="link" className={cn("w-full cursor-pointer")}>
+          <Button
+            variant="link"
+            className={cn("w-full cursor-pointer")}
+            onClick={() => openEdit(row.original)}
+          >
             {row.original.id}
           </Button>
         ),
@@ -105,8 +125,7 @@ export function TableView() {
       {
         accessorKey: "owner",
         header: "Owner",
-        cell: ({ row }) =>
-        (
+        cell: ({ row }) => (
           <div className="truncate max-w-[150px]">
             {(row.original as any).owner?.username || "Unknown"}
           </div>
@@ -115,7 +134,6 @@ export function TableView() {
         enableColumnFilter: true,
       },
       {
-        id: "createdAt",
         accessorKey: "createdAt",
         header: ({ column }: { column: Column<Post, unknown> }) => (
           <DataTableColumnHeader column={column} title="Created" />
@@ -132,7 +150,6 @@ export function TableView() {
         enableColumnFilter: false,
       },
       {
-        id: "updatedAt",
         accessorKey: "updatedAt",
         header: ({ column }: { column: Column<Post, unknown> }) => (
           <DataTableColumnHeader column={column} title="Updated" />
@@ -154,7 +171,12 @@ export function TableView() {
           const obj = row.original;
           return (
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => openEdit(obj)}
+              >
                 <Edit className="h-4 w-4" />
                 <span className="sr-only">Edit post</span>
               </Button>
@@ -181,7 +203,7 @@ export function TableView() {
         enableSorting: false,
       },
     ],
-    [openDeleteDialog]
+    [openDeleteDialog, openEdit]
   );
 
   const [parsedData, setParsedData] = useState<Post[]>([]);
@@ -195,7 +217,7 @@ export function TableView() {
     columns,
     pageCount: parsedPagination.pageCount,
     initialState: {
-      sorting: [{ id: "id", desc: true }],
+      sorting: [{ id: "createdAt", desc: true }],
     },
     getRowId: (row) => `${row.id}`,
   });
@@ -225,7 +247,8 @@ export function TableView() {
   }, [tableState.sorting, tableState.pagination, tableState.columnFilters]);
 
   // Fetch data with trpc
-  const { isLoading, data, error, refetch } = trpc.post.adminList.useQuery(queryParams);
+  const { isLoading, data, error, refetch } =
+    trpc.post.adminList.useQuery(queryParams);
 
   useEffect(() => {
     if (!data) return;
@@ -250,11 +273,11 @@ export function TableView() {
   return (
     <>
       <div className="flex items-start justify-between">
-        <Heading
-          title="Posts"
-          description="Manage your posts"
-        />
-        <Button>
+        <Heading title="Posts" description="Manage your posts" />
+        <Button
+          onClick={() => router.push("/dashboard/posts/new")}
+          className="h-8"
+        >
           <PlusIcon className="mr-2 h-4 w-4" />
           New Post
         </Button>

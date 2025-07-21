@@ -11,7 +11,7 @@ import {
   SkipForward,
 } from "lucide-react";
 import { PropsWithChildren } from "react";
-import { useEditor } from "../../context";
+import { usePythonTutorVisualizationEditor } from "../../context";
 
 const VisualizationRunAlert = () => {
   return (
@@ -69,7 +69,7 @@ const VisualizationConsoleOutput = ({ stdout }: { stdout: string }) => {
 
 const VisualizationToolbar = () => {
   const { executionTrace, currentVisualData, goToStep, viewMode, setViewMode } =
-    useEditor();
+    usePythonTutorVisualizationEditor();
 
   if (!executionTrace) return null;
 
@@ -162,16 +162,13 @@ const VisualizationToolbar = () => {
           </div>
         </div>
       </div>
-
-      <div className="text-xs text-muted-foreground text-center">
-        Use ← → arrow keys or N/P keys to navigate
-      </div>
     </div>
   );
 };
 
 const VisualizationRenderJson = () => {
-  const { executionTrace, currentVisualData } = useEditor();
+  const { executionTrace, currentVisualData } =
+    usePythonTutorVisualizationEditor();
   if (!executionTrace) return null;
   return (
     <div>

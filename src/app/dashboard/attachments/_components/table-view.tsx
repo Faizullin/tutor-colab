@@ -1,12 +1,16 @@
 "use client";
 
-import AttachmentUploadDialog, { useAttachmentUploadDialogControl } from "@/components/attachment/attachment-upload-dialog";
+import AttachmentUploadDialog, {
+  useAttachmentUploadDialogControl,
+} from "@/components/attachment/attachment-upload-dialog";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { useDataTable } from "@/components/data-table/use-data-table";
-import DeleteConfirmDialog, { useDeleteConfirmDialogControl } from "@/components/resource/delete-confirm-dialog";
+import DeleteConfirmDialog, {
+  useDeleteConfirmDialogControl,
+} from "@/components/resource/delete-confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -20,18 +24,12 @@ import { Attachment } from "@/generated/prisma";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/utils/trpc";
 import { Column, ColumnDef } from "@tanstack/react-table";
-import { Edit, MoreHorizontal, PlusIcon, Trash2 } from "lucide-react";
+import { EyeIcon, MoreHorizontal, PlusIcon, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Heading } from "../../_components/common/heading";
 
-
-type QueryParams = Parameters<typeof trpc.attachment.list.useQuery>[0];
-type ActionType = "create" | "edit" | "delete";
-interface Action {
-  type: ActionType;
-  obj?: Attachment;
-}
+type QueryParams = Parameters<typeof trpc.attachment.adminList.useQuery>[0];
 
 export function TableView() {
   const uploadDialogControl = useAttachmentUploadDialogControl({
@@ -44,9 +42,9 @@ export function TableView() {
   const deleteConfirmDialogControl = useDeleteConfirmDialogControl<Attachment>({
     onConfirm: ({ items }) => {
       if (items?.length === 1) {
-        deleteMutation.mutateAsync({ id: items[0].id }).then(() => {
+        deleteMutation.mutateAsync(items[0].id).then(() => {
           deleteConfirmDialogControl.close();
-        })
+        });
       }
     },
   });
@@ -56,14 +54,19 @@ export function TableView() {
     uploadDialogControl.openWithData();
   }, [uploadDialogControl]);
 
-  const openDeleteDialog = useCallback((obj: Attachment) => {
-    deleteConfirmDialogControl.openWithData({
-      items: [obj],
-    });
-  }, []);
+  const deleteConfirmDialogControlOpenWithData =
+    deleteConfirmDialogControl.openWithData;
+  const openDeleteDialog = useCallback(
+    (obj: Attachment) => {
+      deleteConfirmDialogControlOpenWithData({
+        items: [obj],
+      });
+    },
+    [deleteConfirmDialogControlOpenWithData]
+  );
 
   // Replace with your actual delete mutation
-  const deleteMutation = trpc.attachment.delete.useMutation({
+  const deleteMutation = trpc.attachment.adminDelete.useMutation({
     onSuccess: () => {
       refetch();
       toast.success("Attachment deleted successfully!");
@@ -101,7 +104,7 @@ export function TableView() {
         enableHiding: false,
       },
       {
-        id: "id",
+        accessorKey: "id",
         header: ({ column }: { column: Column<Attachment, unknown> }) => (
           <DataTableColumnHeader column={column} title="Id" />
         ),
@@ -117,7 +120,6 @@ export function TableView() {
         enableSorting: true,
       },
       {
-        id: "originalName",
         accessorKey: "originalName",
         header: ({ column }: { column: Column<Attachment, unknown> }) => (
           <DataTableColumnHeader column={column} title="Original name" />
@@ -189,7 +191,6 @@ export function TableView() {
         },
       },
       {
-        id: "createdAt",
         accessorKey: "createdAt",
         header: ({ column }: { column: Column<Attachment, unknown> }) => (
           <DataTableColumnHeader column={column} title="Created" />
@@ -210,7 +211,6 @@ export function TableView() {
         enableColumnFilter: false,
       },
       {
-        id: "updatedAt",
         accessorKey: "updatedAt",
         header: ({ column }: { column: Column<Attachment, unknown> }) => (
           <DataTableColumnHeader column={column} title="Updated" />
@@ -237,7 +237,7 @@ export function TableView() {
           return (
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <Edit className="h-4 w-4" />
+                <EyeIcon className="h-4 w-4" />
                 <span className="sr-only">Edit attachment</span>
               </Button>
               <DropdownMenu>
@@ -266,8 +266,6 @@ export function TableView() {
     [openDeleteDialog]
   );
 
-
-
   const [parsedData, setParsedData] = useState<Attachment[]>([]);
   const [parsedPageination, setParsedPagination] = useState({
     pageCount: 1,
@@ -278,7 +276,7 @@ export function TableView() {
     columns,
     pageCount: parsedPageination.pageCount,
     initialState: {
-      sorting: [{ id: "id", desc: true }],
+      sorting: [{ id: "createdAt", desc: true }],
     },
     getRowId: (row) => `${row.id}`,
   });
@@ -297,18 +295,19 @@ export function TableView() {
         skip: tableState.pagination.pageIndex * tableState.pagination.pageSize,
         take: tableState.pagination.pageSize,
       },
-    }
+    };
     if (tableState.sorting[0]) {
       parsed.orderBy = {
         field: tableState.sorting[0].id,
         direction: tableState.sorting[0].desc ? "desc" : "asc",
-      }
+      };
     }
     return parsed as QueryParams;
   }, [tableState.sorting, tableState.pagination, tableState.columnFilters]);
 
   // Fetch data with trpc
-  const { isLoading, data, error, refetch } = trpc.attachment.list.useQuery(queryParams);
+  const { isLoading, data, error, refetch } =
+    trpc.attachment.adminList.useQuery(queryParams);
   useEffect(() => {
     if (!data) return;
     const parsed =
@@ -321,10 +320,7 @@ export function TableView() {
     setParsedPagination({
       pageCount: Math.ceil(data.total / data.meta.take),
     });
-  }, [data,]);
-
-
-
+  }, [data]);
 
   if (error) {
     return (
@@ -335,10 +331,7 @@ export function TableView() {
   return (
     <>
       <div className="flex items-start justify-between">
-        <Heading
-          title="Attachments"
-          description="Manage your attachments"
-        />
+        <Heading title="Attachments" description="Manage your attachments" />
         <Button onClick={openCreateSheet}>
           <PlusIcon className="mr-2 h-4 w-4" />
           Upload

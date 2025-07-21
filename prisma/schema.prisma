@@ -36,13 +36,19 @@ model UserAccount {
 }
 
 model Post {
-  id Int @id @default(autoincrement())
+  id   Int    @id @default(autoincrement())
+  slug String @unique
 
   owner   UserAccount @relation(fields: [ownerId], references: [id])
   ownerId Int
 
   title   String
   content String?
+
+  thumbnailImage   Attachment? @relation(fields: [thumbnailImageId], references: [id])
+  thumbnailImageId Int?
+
+  excerpt String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -69,6 +75,7 @@ model Attachment {
   objectType ContentTypeGeneric?
   Project    Project?            @relation(fields: [projectId], references: [id])
   projectId  Int?
+  Post       Post[]
 }
 
 enum UserRole {
@@ -100,10 +107,11 @@ model Project {
 }
 
 model ProjectFile {
-  id      Int    @id @default(autoincrement())
-  name    String
-  path    String // e.g., "/src/index.js", "/README.md" (unique within a project)
-  content String @default("")
+  id       Int     @id @default(autoincrement())
+  name     String
+  path     String // e.g., "/src/index.js", "/README.md" (unique within a project)
+  content  String  @default("")
+  language String?
 
   projectId Int
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)

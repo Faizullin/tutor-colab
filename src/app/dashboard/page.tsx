@@ -1,3 +1,5 @@
-export default function Page() {
-  return <>Coming Soon</>;
+import { redirect } from "next/navigation";
+
+export default async function Page() {
+  return redirect("/dashboard/default");
 }

@@ -4,35 +4,6 @@ import { ExecutionRequest, ExecutionResponse, ExecutionTrace } from "./types";
 export class VisualizationServiceBase {
   private static readonly LOCAL_API_ENDPOINT = "";
 
-  async loadData() {
-    try {
-      const response = await fetch(
-        `${VisualizationServiceBase.LOCAL_API_ENDPOINT}/api/load`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || "Data loading failed");
-      }
-
-      return data;
-    } catch (error) {
-      Log.error("VisualizationServiceBase: Data loading failed:", error);
-      throw error;
-    }
-  }
-
   async executeCode(request: ExecutionRequest): Promise<ExecutionResponse> {
     const _configParams = this.getConfigParams();
     const payload = {
@@ -40,6 +11,7 @@ export class VisualizationServiceBase {
       language: request.language,
       user_uuid: _configParams.userUUID,
       session_uuid: _configParams.sessionUUID,
+      provider: "pythontutor",
     };
 
     try {
@@ -58,13 +30,15 @@ export class VisualizationServiceBase {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data: ExecutionResponse = await response.json();
+      const data = (await response.json()) as {
+        result: ExecutionResponse;
+      };
 
-      if (!data.success) {
-        throw new Error(data.error || "Execution failed");
+      if (!data.result.success) {
+        throw new Error(data.result.error || "Execution failed");
       }
 
-      return data;
+      return data.result;
     } catch (error) {
       Log.error("PythonTutorService: Execution failed:", error);
       throw error;
@@ -74,16 +48,16 @@ export class VisualizationServiceBase {
   /**
    * Parse execution response data into trace object
    */
-  parseExecutionTrace(responseData: string): ExecutionTrace | null {
+  parseExecutionTrace(responseData: string) {
     try {
       const parsed = JSON.parse(responseData);
       if (parsed.trace && Array.isArray(parsed.trace)) {
         return parsed as ExecutionTrace;
       }
-      return null;
+      throw new Error("Invalid trace data format");
     } catch (error) {
       Log.error("PythonTutorService: Failed to parse trace data:", error);
-      return null;
+      throw error;
     }
   }
 

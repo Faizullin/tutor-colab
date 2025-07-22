@@ -112,7 +112,7 @@ interface HeapVariableData extends Record<string, any> {
 }
 export type PyHeapNodeType = Node<HeapVariableData>;
 
-export const HeapNode: React.FC<NodeProps<PyHeapNodeType>> = ({ data, id }) => {
+export const HeapNode: React.FC<NodeProps<PyHeapNodeType>> = ({ data }) => {
   // Body renderer -----------------------------------------------------------
 
   const cls = buildClasses("yellow");

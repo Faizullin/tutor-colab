@@ -490,7 +490,7 @@ const NiceModalPlaceholder: React.FC = () => {
 
   visibleModalIds.forEach((id) => {
     if (!MODAL_REGISTRY[id] && !ALREADY_MOUNTED[id]) {
-      Log.warn(
+      Log.error(
         `No modal found for id: ${id}. Please check the id or if it is registered or declared via JSX.`
       );
       return;

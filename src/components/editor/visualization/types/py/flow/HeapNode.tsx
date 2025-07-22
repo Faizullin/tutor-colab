@@ -5,6 +5,7 @@ import {
   PyGlobalPrimitiveVariableType,
   PyGlobalReferenceVariableType,
   PyHeapArrayVariableType,
+  PyRefAddress,
 } from "../types";
 import PyUtils from "../utils";
 
@@ -46,49 +47,62 @@ const ElemHandle: React.FC<ElemHandleProps> = ({
   />
 );
 
+
+const ElementHandleMap = {
+  Source: ({
+    address
+  }: {
+    address: PyRefAddress;
+  }) => {
+    const handleBase = PyUtils.getVariableNodeId(address);
+    return <ElemHandle anchorId={handleBase} position={Position.Left} />;
+  },
+  Target: ({
+    address
+  }: {
+    address: PyRefAddress;
+  }) => {
+    const handleBase = PyUtils.getVariableNodeId(address);
+    return <ElemHandle anchorId={handleBase} position={Position.Right} isSource={true} />;
+  },
+}
+
+
+const ArrayItemCard = ({
+  value,
+}: {
+  value: PyGlobalReferenceVariableType | PyGlobalPrimitiveVariableType;
+}) => {
+  const isPtr = PyUtils.isPointer(value);
+  const ptrVal = isPtr ? (value as PyGlobalReferenceVariableType).ref : null;
+
+  return (
+    <div className="p-1 text-center relative">
+      {
+        isPtr && (
+          <ElementHandleMap.Source address={value.ref} />
+        )
+      }
+
+      <div className="font-semibold text-sm">
+        {isPtr ? ptrVal : String(value)}
+      </div>
+
+      {isPtr && ptrVal && (
+        <ElementHandleMap.Target address={value.ref} />
+      )}
+    </div>
+  );
+}
 const ArrayRenderer: React.FC<{
   value: PyHeapArrayVariableType;
 }> = ({ value }) => {
   return (
     <div className="p-2">
       <div className="grid grid-cols-3 gap-1">
-        {value.fields.map((el, idx) => {
-          const isPtr = PyUtils.isPointer(el.value);
-          const ptrVal = isPtr
-            ? (el.value as PyGlobalReferenceVariableType).ref
-            : null;
-          return (
-            <div key={idx} className={`p-1 text-center relative`}>
-              {(() => {
-                if (!isPtr) {
-                  return null;
-                }
-                const handleBase = PyUtils.getVariableNodeId(el.value.ref);
-                return (
-                  <ElemHandle anchorId={handleBase} position={Position.Left} />
-                );
-              })()}
-
-              <div className="text-xs font-mono text-gray-600 font-bold">
-                {value.collectionType === "DICT"
-                  ? `["${el.key}"]`
-                  : `[${el.key}]`}
-              </div>
-              <div className="font-semibold text-sm">
-                {isPtr ? ptrVal : String(el.value)}
-              </div>
-
-              {/* {isPtr && ptrVal && (
-                <ElemHandle
-                  anchorId={handleBase}
-                  position={Position.Right}
-                  small={false}
-                  isSource={true}
-                />
-              )} */}
-            </div>
-          );
-        })}
+        {value.fields.map((el, idx) => (
+          <ArrayItemCard key={idx} value={el.value} />
+        ))}
       </div>
     </div>
   );
@@ -136,7 +150,7 @@ export const HeapNode: React.FC<NodeProps<PyHeapNodeType>> = ({ data }) => {
 
       {/* Body ------------------------------------------------------------- */}
       {data.heap.type === "COLLECTION" && <ArrayRenderer value={data.heap} />}
-      {data.heap.type === "PRIMITIVE" && <PrimitiveRenderer prim={data.heap} />}
+      {data.heap.type === "PRIMITIVE" && <PrimitiveRenderer value={data.heap} />}
       {data.heap.type === "REF" && (
         <div className="text-xs text-slate-500 mt-1">
           Reference to: {data.heap.ref}
